@@ -1,0 +1,15 @@
+# Core Django
+django>=5.0,<6.0
+
+# Tailwind CSS integration
+django-tailwind[reload]
+
+# Development tools
+django-browser-reload
+
+# Future dependencies can be added here
+# For production, you might want to add:
+# gunicorn
+# whitenoise
+# django-environ
+# psycopg2-binary (for PostgreSQL)

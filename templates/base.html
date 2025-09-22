@@ -1,0 +1,44 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QuizApp{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    {% tailwind_css %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-100">
+    <!-- Navigation -->
+    <nav class="navbar bg-primary text-primary-content shadow-lg">
+        <div class="navbar-start">
+            <a class="btn btn-ghost text-xl font-bold" href="{% url 'home' %}">
+                QuizApp
+            </a>
+        </div>
+        <div class="navbar-end">
+            <!-- Future navigation items -->
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-auto">
+        <div>
+            <p>&copy; 2025 QuizApp. Built with Django & Tailwind CSS.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
