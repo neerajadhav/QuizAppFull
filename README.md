@@ -107,6 +107,43 @@ This is a scaffold with a welcome page. You can now:
 4. Add more interactive features
 5. Set up deployment configuration
 
+## Production Deployment
+
+For production deployment, use the simplified `prod.sh` script:
+
+### Quick Production Start
+
+```bash
+# Deploy with all steps (build, migrate, collect static, start server)
+./prod.sh deploy
+
+# Start on different host/port with more workers
+./prod.sh deploy 0.0.0.0 8080 4
+```
+
+### Individual Commands
+
+```bash
+./prod.sh build       # Build Tailwind CSS only
+./prod.sh migrate     # Run database migrations only
+./prod.sh static      # Collect static files only
+./prod.sh start       # Start server only (on 127.0.0.1:8000)
+```
+
+### Production Features
+
+- **Uvicorn ASGI server** for high performance
+- **WhiteNoise** for efficient static file serving
+- **Minified Tailwind CSS** with daisyUI
+- **Production-optimized Django settings**
+- **Automatic asset building and collection**
+
+The production setup automatically:
+1. ✅ Builds and minifies Tailwind CSS
+2. ✅ Runs database migrations
+3. ✅ Collects and compresses static files
+4. ✅ Starts Uvicorn server with multiple workers
+
 ## Contributing
 
 1. Follow Django best practices

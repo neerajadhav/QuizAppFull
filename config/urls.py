@@ -31,3 +31,5 @@ if settings.DEBUG:
     ]
     # Serve static files during development
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+# In production, WhiteNoise middleware handles static files automatically
