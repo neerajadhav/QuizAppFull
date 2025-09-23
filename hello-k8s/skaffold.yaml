@@ -11,7 +11,7 @@ build:
     - image: gateway-service
       context: gateway
   local:
-    push: false   # don't push to remote registry; use local images
+    push: false
 manifests:
   rawYaml:
     - k8s/hello-deployment.yaml
@@ -20,3 +20,8 @@ manifests:
     - k8s/hello-configmap.yaml
 deploy:
   kubectl: {}
+portForward:
+  - resourceType: service
+    resourceName: gateway-service
+    port: 80       # service port in cluster
+    localPort: 8080  # port on your laptop
