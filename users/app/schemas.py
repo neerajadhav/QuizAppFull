@@ -5,14 +5,14 @@ from pydantic import BaseModel, EmailStr, HttpUrl, Field
 # User schemas
 class UserBase(BaseModel):
     email: EmailStr
-    name: str | None = None
+    username: str
     is_active: bool = True
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
 
 class UserUpdate(BaseModel):
-    name: str | None = None
+    username: str | None = None
     email: EmailStr | None = None
     is_active: bool | None = None
 
@@ -33,7 +33,7 @@ class UserRead(UserBase):
 
 # Profile-specific schemas
 class UserProfileUpdate(BaseModel):
-    name: str | None = Field(None, max_length=255)
+    username: str | None = Field(None, max_length=255)
     bio: str | None = Field(None, max_length=1000)
     avatar_url: str | None = Field(None, max_length=500)
     location: str | None = Field(None, max_length=255)
@@ -51,7 +51,7 @@ class UserPreferencesUpdate(BaseModel):
 class UserProfile(BaseModel):
     id: int
     email: EmailStr
-    name: str | None = None
+    username: str | None = None
     bio: str | None = None
     avatar_url: str | None = None
     location: str | None = None
