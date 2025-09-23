@@ -22,7 +22,7 @@ app = FastAPI(title="Users API", version="0.2.0", lifespan=lifespan)
 @app.get("/")
 def read_root():
     return {
-        "message": "Hello from FastAPI on Kubernetes! updated",
+        "message": "Hey, This microservice handles user management",
         "version": app.version,
         "env": os.getenv("APP_ENV", "dev"),
     }
