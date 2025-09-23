@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('frontend.urls')),
     path('', include('users.urls')),
+    path('', include('quizzes.urls')),
 ]
 
 # Serve media files during development
