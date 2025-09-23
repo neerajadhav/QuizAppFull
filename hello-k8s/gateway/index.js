@@ -12,7 +12,11 @@ app.get('/hello-world', async (req, res) => {
       axios.get(HELLO_URL),
       axios.get(WORLD_URL)
     ]);
-    res.json({ message: `${h.data.greeting} ${w.data.name}` });
+    res.json({
+      message: `${h.data.greeting} ${w.data.name}`,
+      helloUrl: HELLO_URL,
+      worldUrl: WORLD_URL
+    });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
