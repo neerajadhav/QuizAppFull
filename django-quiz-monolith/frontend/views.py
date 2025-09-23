@@ -5,10 +5,6 @@ def home(request):
     """Home page view"""
     return render(request, 'frontend/home.html')
 
-def about(request):
-    """About page view"""
-    return render(request, 'frontend/about.html')
-
 @login_required
 def dashboard(request):
     """Dashboard view that redirects based on user role"""

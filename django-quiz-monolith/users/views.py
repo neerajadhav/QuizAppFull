@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.views import LoginView
 from .models import User, UserProfile
 
 try:
@@ -13,8 +14,21 @@ except ImportError:
     CustomUserCreationForm = None
     UserProfileForm = None
 
+class CustomLoginView(LoginView):
+    """Custom login view that redirects authenticated users"""
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Redirect authenticated users to dashboard
+        if request.user.is_authenticated:
+            return redirect('users:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
 def register(request):
     """User registration view"""
+    # Redirect authenticated users to dashboard
+    if request.user.is_authenticated:
+        return redirect('users:dashboard')
+        
     if CustomUserCreationForm is None:
         messages.error(request, 'Registration is temporarily unavailable.')
         return redirect('users:login')
@@ -45,7 +59,7 @@ def profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated successfully!')
-            return redirect('profile')
+            return redirect('users:profile')
     else:
         form = UserProfileForm(instance=profile)
     
@@ -70,7 +84,7 @@ def api_user_info(request):
 def dashboard(request):
     """Dashboard view based on user role"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     if request.user.is_student:
         return render(request, 'users/student_dashboard.html')
@@ -78,3 +92,9 @@ def dashboard(request):
         return render(request, 'users/teacher_dashboard.html')
     else:
         return render(request, 'users/dashboard.html')
+
+def logout_view(request):
+    """Custom logout view"""
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    return redirect('frontend:home')

@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-dismiss alerts after 5 seconds
     setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert, [class*="bg-red-"], [class*="bg-green-"], [class*="bg-yellow-"], [class*="bg-blue-"]');
+        const alerts = document.querySelectorAll('.alert, .alert-success, .alert-error, .alert-warning, .alert-info, [data-alert="true"]');
         alerts.forEach(alert => {
             if (alert.textContent.trim()) {
                 alert.style.transition = 'opacity 0.5s ease-out';
