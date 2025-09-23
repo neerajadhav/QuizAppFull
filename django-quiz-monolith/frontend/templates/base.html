@@ -39,50 +39,93 @@
     <!-- Navigation -->
     <nav class="bg-dark-900 border-b border-dark-800 sticky top-0 z-50">
         <div class="max-w-full px-4">
-            <div class="flex justify-between items-center h-14">
-                <div class="flex items-center space-x-6">
-                    <a href="{% url 'frontend:home' %}" class="text-xl font-bold text-white hover:text-gray-300 transition-colors">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{% url 'frontend:home' %}" class="text-lg md:text-xl font-bold text-white hover:text-gray-300 transition-colors">
                         Quiz App
                     </a>
                 </div>
                 
-                <div class="flex items-center space-x-4">
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Desktop navigation -->
+                <div class="hidden md:flex items-center space-x-4">
                     {% if user.is_authenticated %}
                         <div class="flex items-center space-x-3">
-                            <span class="text-sm text-gray-300">
+                            <span class="text-sm text-gray-300 hidden lg:inline">
                                 {{ user.first_name|default:user.username }}
                             </span>
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-dark-800 text-gray-300 border border-dark-700">
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-dark-800 text-gray-300 border border-dark-700 rounded">
                                 {{ user.get_role_display }}
                             </span>
                         </div>
-                        <a href="{% url 'users:dashboard' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors">
+                        <a href="{% url 'users:dashboard' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors rounded">
                             Dashboard
                         </a>
-                        <a href="{% url 'users:profile' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors">
+                        <a href="{% url 'users:profile' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors rounded">
                             Profile
                         </a>
-                        <a href="{% url 'users:logout' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors">
+                        <a href="{% url 'users:logout' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors rounded">
                             Logout
                         </a>
                     {% else %}
-                        <a href="{% url 'users:login' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors">
+                        <a href="{% url 'users:login' %}" class="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 border border-dark-700 hover:border-gray-600 transition-colors rounded">
                             Login
                         </a>
-                        <a href="{% url 'users:register' %}" class="bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors">
+                        <a href="{% url 'users:register' %}" class="bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors rounded">
                             Register
                         </a>
                     {% endif %}
                 </div>
+            </div>
+
+            <!-- Mobile navigation menu -->
+            <div id="mobile-menu" class="md:hidden hidden border-t border-dark-800 mt-1 pt-4 pb-4">
+                {% if user.is_authenticated %}
+                    <div class="flex flex-col space-y-2">
+                        <div class="px-4 py-2 text-sm text-gray-300">
+                            {{ user.first_name|default:user.username }}
+                            <span class="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium bg-dark-800 text-gray-300 border border-dark-700 rounded">
+                                {{ user.get_role_display }}
+                            </span>
+                        </div>
+                        <a href="{% url 'users:dashboard' %}" class="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">
+                            Profile
+                        </a>
+                        <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">
+                            Logout
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="flex flex-col space-y-2">
+                        <a href="{% url 'users:login' %}" class="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">
+                            Login
+                        </a>
+                        <a href="{% url 'users:register' %}" class="block px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-secondary transition-colors rounded mx-4">
+                            Register
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </nav>
 
     <!-- Messages -->
     {% if messages %}
-        <div class="max-w-full px-4 mt-2">
+        <div class="px-4 mt-2 max-w-7xl mx-auto w-full">
             {% for message in messages %}
-                <div data-alert="true" class="p-3 mb-2 border-l-4 
+                <div data-alert="true" class="p-3 mb-2 border-l-4 rounded-r-md
                     {% if message.tags == 'error' %}bg-red-900 border-red-500 text-red-200
                     {% elif message.tags == 'warning' %}bg-yellow-900 border-yellow-500 text-yellow-200
                     {% elif message.tags == 'success' %}bg-green-900 border-green-500 text-green-200
@@ -94,14 +137,14 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="max-w-full px-4 py-6">
+    <main class="flex-1 px-4 py-6 max-w-7xl mx-auto w-full">
         {% block content %}
         {% endblock %}
     </main>
 
     <!-- Footer -->
     <footer class="bg-dark-900 border-t border-dark-800 mt-auto">
-        <div class="max-w-full px-4 py-4">
+        <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="text-center text-sm text-gray-400">
                 © 2024 Quiz App. Built with Django & Tailwind CSS.
             </div>
@@ -110,6 +153,23 @@
 
     {% block scripts %}
     <script src="{% static 'js/app.js' %}"></script>
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            
+            if (!mobileMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+    </script>
     {% endblock %}
 </body>
 </html>

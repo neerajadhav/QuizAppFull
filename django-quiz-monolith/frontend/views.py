@@ -1,8 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
 def home(request):
     """Home page view"""
+    # Redirect authenticated users to their dashboard
+    if request.user.is_authenticated:
+        return redirect('users:dashboard')
     return render(request, 'frontend/home.html')
 
 @login_required
