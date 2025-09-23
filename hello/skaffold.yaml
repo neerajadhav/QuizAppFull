@@ -1,0 +1,26 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: hello-api
+
+build:
+  local:
+    push: false
+  artifacts:
+    - image: hello-api
+      context: .
+      docker:
+        dockerfile: Dockerfile
+
+deploy:
+  kubectl: {}
+
+manifests:
+  rawYaml:
+    - k8s/*.yaml
+
+portForward:
+  - resourceType: service
+    resourceName: hello-api
+    port: 8000
+    localPort: 8000
