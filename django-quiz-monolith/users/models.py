@@ -66,7 +66,6 @@ class UserProfile(models.Model):
     # Student-specific fields
     degree = models.CharField(max_length=10, choices=DEGREE_CHOICES, blank=True, null=True)
     year_of_admission = models.PositiveIntegerField(blank=True, null=True, help_text="Year when the student was admitted")
-    student_id = models.CharField(max_length=20, blank=True, null=True)
     
     # Teacher-specific fields
     subject_specialization = models.CharField(max_length=100, blank=True)  # For teachers
@@ -82,14 +81,6 @@ class UserProfile(models.Model):
                 raise ValidationError("Year of admission cannot be in the future.")
             if self.year_of_admission and self.year_of_admission < 1990:
                 raise ValidationError("Year of admission seems too old.")
-            
-            # Check for unique student_id only if it's not empty
-            if self.student_id and self.student_id.strip():
-                existing = UserProfile.objects.filter(student_id=self.student_id.strip())
-                if self.pk:
-                    existing = existing.exclude(pk=self.pk)
-                if existing.exists():
-                    raise ValidationError("Student ID must be unique.")
     
     @property
     def current_semester(self):

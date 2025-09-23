@@ -39,7 +39,7 @@ class CustomUserCreationForm(UserCreationForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['degree', 'year_of_admission', 'student_id', 'academic_year', 'subject_specialization', 'experience_years']
+        fields = ['degree', 'year_of_admission', 'academic_year', 'subject_specialization', 'experience_years']
         widgets = {
             'degree': forms.Select(attrs={'class': 'form-control'}),
             'year_of_admission': forms.NumberInput(attrs={
@@ -47,10 +47,6 @@ class UserProfileForm(forms.ModelForm):
                 'min': '1990',
                 'max': '2030',
                 'placeholder': 'e.g., 2020'
-            }),
-            'student_id': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., ST123456'
             }),
             'academic_year': forms.TextInput(attrs={'class': 'form-control'}),
             'subject_specialization': forms.TextInput(attrs={'class': 'form-control'}),
@@ -69,30 +65,16 @@ class UserProfileForm(forms.ModelForm):
             # Make student fields required
             self.fields['degree'].required = True
             self.fields['year_of_admission'].required = True
-            self.fields['student_id'].required = True
             
             # Add help text
             self.fields['degree'].help_text = "Select your degree program"
             self.fields['year_of_admission'].help_text = "Year when you were admitted to the program"
-            self.fields['student_id'].help_text = "Your unique student identification number"
             
         elif user and user.is_teacher:
             # Show only teacher-relevant fields
             self.fields.pop('degree', None)
             self.fields.pop('year_of_admission', None)
-            self.fields.pop('student_id', None)
             self.fields.pop('academic_year', None)
-            
-    def clean_student_id(self):
-        student_id = self.cleaned_data.get('student_id')
-        if student_id:
-            # Check if student_id is unique (excluding current instance)
-            existing = UserProfile.objects.filter(student_id=student_id)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            if existing.exists():
-                raise forms.ValidationError("This student ID is already in use.")
-        return student_id
     
     def clean_year_of_admission(self):
         year_of_admission = self.cleaned_data.get('year_of_admission')

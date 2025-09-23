@@ -89,6 +89,6 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'academic_year', 'subject_specialization', 'student_id')
-    list_filter = ('academic_year', 'subject_specialization')
+    list_display = ('user', 'degree', 'year_of_admission', 'academic_year', 'subject_specialization')
+    list_filter = ('degree', 'year_of_admission', 'academic_year', 'subject_specialization')
     search_fields = ('user__username', 'user__email', 'user__institute__name')
