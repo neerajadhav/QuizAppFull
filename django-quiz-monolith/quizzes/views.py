@@ -9,18 +9,32 @@ def create_quiz(request):
     if request.method == 'POST':
         quiz_title = request.POST.get('quiz_title', '').strip()
         quiz_description = request.POST.get('quiz_description', '').strip()
+        intent_degree = request.POST.get('intent_degree', '').strip()
+        intent_semester = request.POST.get('intent_semester', '').strip()
         if quiz_title:
             from .models import Quiz
             quiz = Quiz.objects.create(
                 title=quiz_title,
                 description=quiz_description,
-                created_by=request.user
+                created_by=request.user,
+                intent_degree=intent_degree,
+                intent_semester=intent_semester
             )
             return redirect('quizzes:view_quiz', quiz_id=quiz.id)
         else:
             error = "Quiz title is required."
-            return render(request, 'quizzes/create_quiz.html', {'error': error, 'quiz_title': quiz_title, 'quiz_description': quiz_description})
-    return render(request, 'quizzes/create_quiz.html')
+            return render(request, 'quizzes/create_quiz.html', {
+                'error': error,
+                'quiz_title': quiz_title,
+                'quiz_description': quiz_description,
+                'intent_degree': intent_degree,
+                'intent_semester': intent_semester
+            })
+    # Provide semester choices for initial form rendering
+    semester_choices = [(str(i), f'Semester {i}') for i in range(1, 9)]
+    return render(request, 'quizzes/create_quiz.html', {
+        'semester_choices': semester_choices
+    })
 
 
 @user_passes_test(is_teacher)
