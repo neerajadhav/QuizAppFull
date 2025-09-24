@@ -16,54 +16,11 @@ def create_quiz(request):
                 description=quiz_description,
                 created_by=request.user
             )
-            return redirect('quizzes:add_questions', quiz_id=quiz.id)
+            return redirect('quizzes:view_quiz', quiz_id=quiz.id)
         else:
             error = "Quiz title is required."
             return render(request, 'quizzes/create_quiz.html', {'error': error, 'quiz_title': quiz_title, 'quiz_description': quiz_description})
     return render(request, 'quizzes/create_quiz.html')
-
-
-@user_passes_test(is_teacher)
-def add_questions(request, quiz_id):
-    from .models import Quiz, Question, Option
-    quiz = get_object_or_404(Quiz, id=quiz_id)
-    success = False
-    errors = []
-    
-    if request.method == 'POST':
-        q_text = request.POST.get('question_text', '').strip()
-        q_image = request.FILES.get('question_image')
-        correct_option = request.POST.get('correct_option', '')
-        
-        if q_text:
-            options = []
-            for opt in ['a', 'b', 'c', 'd']:
-                opt_text = request.POST.get(f'option_{opt}', '').strip()
-                opt_image = request.FILES.get(f'option_{opt}_image')
-                is_correct = correct_option == opt
-                if opt_text:
-                    options.append((opt_text, opt_image, is_correct))
-            
-            if len(options) < 3:
-                errors.append("At least 3 options are required.")
-            else:
-                question = Question.objects.create(
-                    quiz=quiz,
-                    text=q_text,
-                    image=q_image
-                )
-                for opt_text, opt_image, is_correct in options:
-                    Option.objects.create(
-                        question=question,
-                        text=opt_text,
-                        image=opt_image,
-                        is_correct=is_correct
-                    )
-                success = True
-        else:
-            errors.append("Question text is required.")
-    
-    return render(request, 'quizzes/add_questions.html', {'quiz_id': quiz_id, 'quiz': quiz, 'success': success, 'errors': errors})
 
 
 @user_passes_test(is_teacher)
@@ -73,15 +30,76 @@ def delete_question(request, question_id):
     quiz_id = question.quiz.id
     if request.method == 'POST':
         question.delete()
-        return redirect('quizzes:add_questions', quiz_id=quiz_id)
+        return redirect('quizzes:view_quiz', quiz_id=quiz_id)
     # for safety, do not allow GET deletes
     return render(request, 'quizzes/confirm_delete.html', {'question': question})
 
 @user_passes_test(is_teacher)
 def view_quiz(request, quiz_id):
-    from .models import Quiz
+    from .models import Quiz, Question, Option
     quiz = get_object_or_404(Quiz, id=quiz_id, created_by=request.user)
-    return render(request, 'quizzes/view_quiz.html', {'quiz': quiz})
+    success = False
+    errors = []
+
+    if request.method == 'POST':
+        question_id = request.POST.get('question_id')
+        q_text = request.POST.get('question_text', '').strip()
+        q_image = request.FILES.get('question_image')
+        correct_option = request.POST.get('correct_option', '')
+
+        if q_text:
+            options = []
+            for opt in ['a', 'b', 'c', 'd']:
+                opt_text = request.POST.get(f'option_{opt}', '').strip()
+                opt_image = request.FILES.get(f'option_{opt}_image')
+                is_correct = correct_option == opt
+                if opt_text:
+                    options.append((opt_text, opt_image, is_correct))
+
+            if len(options) < 3:
+                errors.append("At least 3 options are required.")
+            else:
+                if question_id:  # Editing existing question
+                    try:
+                        question = Question.objects.get(id=question_id, quiz=quiz)
+                        question.text = q_text
+                        if q_image:
+                            question.image = q_image
+                        question.save()
+
+                        # Delete existing options and create new ones
+                        question.options.all().delete()
+                        for opt_text, opt_image, is_correct in options:
+                            Option.objects.create(
+                                question=question,
+                                text=opt_text,
+                                image=opt_image,
+                                is_correct=is_correct
+                            )
+                        success = True
+                    except Question.DoesNotExist:
+                        errors.append("Question not found.")
+                else:  # Creating new question
+                    question = Question.objects.create(
+                        quiz=quiz,
+                        text=q_text,
+                        image=q_image
+                    )
+                    for opt_text, opt_image, is_correct in options:
+                        Option.objects.create(
+                            question=question,
+                            text=opt_text,
+                            image=opt_image,
+                            is_correct=is_correct
+                        )
+                    success = True
+
+            if success:
+                return redirect('quizzes:view_quiz', quiz_id=quiz.id)
+        else:
+            errors.append("Question text is required.")
+
+    return render(request, 'quizzes/view_quiz.html', {'quiz': quiz, 'success': success, 'errors': errors})
 
 @user_passes_test(is_teacher)
 def edit_quiz(request, quiz_id):
