@@ -63,15 +63,18 @@
                         <div class="ml-0">
                             <textarea name="question_text" rows="3" placeholder="Enter your question here..." class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-lg text-sm transition-colors resize-none" required></textarea>
 
-                            <!-- Question Image Upload -->
+                            <!-- Question Image Upload with Preview -->
                             <div class="mt-3">
                                 <label class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Add question image (optional)</span>
-                                    <input type="file" name="question_image" accept="image/*" class="hidden">
+                                    <input type="file" name="question_image" accept="image/*" class="hidden" onchange="previewImage(this, 'questionImagePreview')">
                                 </label>
+                                <div class="mt-2">
+                                    <img id="questionImagePreview" src="#" alt="Preview" class="hidden w-24 h-24 object-contain rounded border border-gray-300 dark:border-gray-600" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -99,15 +102,18 @@
                                     <div class="flex-1 min-w-0">
                                         <input type="text" name="option_{{ opt }}" placeholder="Enter option {{ opt|upper }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded text-sm transition-colors" required>
 
-                                        <!-- Option Image Upload -->
+                                        <!-- Option Image Upload with Preview -->
                                         <div class="mt-2">
                                             <label class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                 <svg class="w-3 h-3 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                 </svg>
                                                 <span class="text-gray-500 dark:text-gray-400">Image</span>
-                                                <input type="file" name="option_{{ opt }}_image" accept="image/*" class="hidden">
+                                                <input type="file" name="option_{{ opt }}_image" accept="image/*" class="hidden" onchange="previewImage(this, 'optionImagePreview_{{ opt }}')">
                                             </label>
+                                            <div class="mt-1">
+                                                <img id="optionImagePreview_{{ opt }}" src="#" alt="Preview" class="hidden w-14 h-14 object-contain rounded border border-gray-300 dark:border-gray-600" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -161,6 +167,21 @@
     </div>
 
     <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.src = '#';
+                preview.classList.add('hidden');
+            }
+        }
+
         function closeModal() {
             document.getElementById('addQuestionModal').classList.add('hidden');
             resetModal();
@@ -177,12 +198,16 @@
             document.getElementById('questionIdInput').value = '';
             document.querySelector('textarea[name="question_text"]').value = '';
             document.querySelector('input[name="question_image"]').value = '';
+            document.getElementById('questionImagePreview').src = '#';
+            document.getElementById('questionImagePreview').classList.add('hidden');
 
-            // Reset all option inputs
+            // Reset all option inputs and previews
             for (let i = 0; i < 4; i++) {
                 const opt = String.fromCharCode(97 + i); // 'a', 'b', 'c', 'd'
                 document.querySelector(`input[name="option_${opt}"]`).value = '';
                 document.querySelector(`input[name="option_${opt}_image"]`).value = '';
+                document.getElementById(`optionImagePreview_${opt}`).src = '#';
+                document.getElementById(`optionImagePreview_${opt}`).classList.add('hidden');
             }
 
             // Reset radio buttons
@@ -205,10 +230,12 @@
                 document.getElementById('questionIdInput').value = questionId;
                 document.querySelector('textarea[name="question_text"]').value = questionText;
 
-                // Reset all option inputs first
+                // Reset all option inputs and previews first
                 for (let i = 0; i < 4; i++) {
                     const opt = String.fromCharCode(97 + i); // 'a', 'b', 'c', 'd'
                     document.querySelector(`input[name="option_${opt}"]`).value = '';
+                    document.getElementById(`optionImagePreview_${opt}`).src = '#';
+                    document.getElementById(`optionImagePreview_${opt}`).classList.add('hidden');
                 }
 
                 // Populate options
