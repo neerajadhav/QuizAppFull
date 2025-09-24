@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from .models import User, UserProfile
+from quizzes.models import Quiz
 
 try:
     from .forms import CustomUserCreationForm, UserProfileForm, SimplePasswordResetForm
@@ -128,7 +129,12 @@ def dashboard(request):
     if request.user.is_student:
         return render(request, 'users/student_dashboard.html')
     elif request.user.is_teacher:
-        return render(request, 'users/teacher_dashboard.html')
+        quizzes = Quiz.objects.filter(created_by=request.user).order_by('-created_at')
+        total_students = User.objects.filter(role='student').count()
+        return render(request, 'users/teacher_dashboard.html', {
+            'quizzes': quizzes,
+            'total_students': total_students
+        })
     else:
         return render(request, 'users/dashboard.html')
 

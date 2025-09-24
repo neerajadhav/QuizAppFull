@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} - QuizApp{% endblock %}
+
+{% block content %}
+<div class="space-y-6 w-full max-w-7xl mx-auto">
+    <!-- Quiz Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ quiz.title }}</h1>
+                {% if quiz.description %}
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ quiz.description }}</p>
+                {% endif %}
+                <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                    Created {{ quiz.created_at|date:"M j, Y" }} • {{ quiz.questions.count }} questions
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <a href="{% url 'quizzes:add_questions' quiz.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Add Questions
+                </a>
+                <a href="{% url 'quizzes:edit_quiz' quiz.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Edit Quiz
+                </a>
+                <a href="{% url 'quizzes:delete_quiz' quiz.id %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Delete Quiz
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions List -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Questions ({{ quiz.questions.count }})</h2>
+        </div>
+        <div class="p-6">
+            {% if quiz.questions.all %}
+                <div class="space-y-6">
+                    {% for question in quiz.questions.all %}
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Question {{ forloop.counter }}</h3>
+                            <form method="post" action="{% url 'quizzes:delete_question' question.id %}" onsubmit="return confirm('Delete this question?');" class="ml-4">
+                                {% csrf_token %}
+                                <button type="submit" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                        <p class="text-gray-900 dark:text-white mb-4">{{ question.text }}</p>
+                        {% if question.image %}
+                            <img src="{{ question.image.url }}" alt="Question image" class="w-32 h-32 object-cover rounded-lg mb-4">
+                        {% endif %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {% for option in question.options.all %}
+                            <div class="{% if option.is_correct %}bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700{% else %}bg-gray-50 dark:bg-gray-600 border-gray-200 dark:border-gray-500{% endif %} border rounded-lg p-4">
+                                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Option {{ option.text|slice:":1"|upper }}</div>
+                                <div class="text-gray-900 dark:text-white">{{ option.text }}</div>
+                                {% if option.image %}
+                                    <img src="{{ option.image.url }}" alt="Option image" class="w-16 h-16 object-cover rounded mt-2">
+                                {% endif %}
+                                {% if option.is_correct %}
+                                    <div class="text-green-600 dark:text-green-400 text-sm mt-2 font-medium">✓ Correct Answer</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No questions yet</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Add your first question to get started.</p>
+                    <a href="{% url 'quizzes:add_questions' quiz.id %}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        Add First Question
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
