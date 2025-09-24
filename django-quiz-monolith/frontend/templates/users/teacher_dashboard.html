@@ -117,29 +117,12 @@
                 <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_students }}</p>
             </div>
         </div>
-
-        <!-- Avg. Completion -->
-        <div
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center">
-            <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                    </path>
-                </svg>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Completion</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">-%</p>
-            </div>
-        </div>
     </div>
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- My Quizzes -->
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3">
             <div class="flex w-full justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <div class="px-0 py-4">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Quizes</h2>
@@ -192,27 +175,6 @@
                 <p class="text-gray-500 dark:text-gray-400">No quizzes yet. Create your first quiz above!</p>
             </div>
             {% endif %}
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="lg:col-span-1">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                </div>
-                <div class="p-6">
-                    <div class="text-center py-8">
-                        <div
-                            class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-3">
-                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">No recent activity to show.</p>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
