@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('frontend.urls')),
     path('', include('users.urls')),
     path('', include('quizzes.urls')),
+    path('quiz-attempts/', include('attemp_quiz.urls')),
 ]
 
 # Serve media files during development

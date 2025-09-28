@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'frontend',
     'quizzes',
+    'attemp_quiz',
 ]
 
 MIDDLEWARE = [
