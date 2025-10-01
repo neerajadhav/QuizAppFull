@@ -301,6 +301,20 @@ def student_dashboard(request):
 
 
 # Analytics views for teachers (accessible from admin)
+def format_duration_with_seconds(duration_minutes):
+    """Helper function to format duration in minutes to h:m:s format"""
+    total_seconds = duration_minutes * 60
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = int(total_seconds % 60)
+    
+    if hours > 0:
+        return f"{hours}h {minutes}m {seconds}s"
+    elif minutes > 0:
+        return f"{minutes}m {seconds}s"
+    else:
+        return f"{seconds}s"
+
 @login_required
 def quiz_analytics(request, quiz_id):
     """Analytics for a specific quiz - Enhanced with comprehensive statistics"""
@@ -350,11 +364,23 @@ def quiz_analytics(request, quiz_id):
     time_analysis = []
     for attempt in attempts:
         if attempt.start_time and attempt.end_time:
-            duration = (attempt.end_time - attempt.start_time).total_seconds() / 60  # in minutes
+            total_seconds = (attempt.end_time - attempt.start_time).total_seconds()
+            duration = total_seconds / 60  # in minutes
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            
+            if hours > 0:
+                duration_display = f"{hours}h {minutes}m {seconds}s"
+            elif minutes > 0:
+                duration_display = f"{minutes}m {seconds}s"
+            else:
+                duration_display = f"{seconds}s"
+            
             time_analysis.append({
                 'attempt': attempt,
                 'duration_minutes': round(duration, 2),
-                'duration_display': f"{int(duration // 60)}h {int(duration % 60)}m" if duration >= 60 else f"{int(duration)}m"
+                'duration_display': duration_display
             })
     
     # Sort by duration
@@ -447,7 +473,7 @@ def quiz_analytics(request, quiz_id):
         'fastest_attempts': fastest_attempts,
         'slowest_attempts': slowest_attempts,
         'avg_duration_minutes': round(avg_duration, 2),
-        'avg_duration_display': f"{int(avg_duration // 60)}h {int(avg_duration % 60)}m" if avg_duration >= 60 else f"{int(avg_duration)}m",
+        'avg_duration_display': format_duration_with_seconds(avg_duration),
         
         # Question Analysis
         'question_analysis': question_analysis,

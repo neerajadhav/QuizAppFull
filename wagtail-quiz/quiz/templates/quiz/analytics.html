@@ -3,392 +3,235 @@
 
 {% block content %}
 <style>
-    .stat-card {
-        border-left: 4px solid;
-        transition: transform 0.2s;
+    body {
+        font-family: sans-serif;
+        background: #fafafa;
     }
-    .stat-card:hover {
-        transform: translateY(-5px);
+    .container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 1rem;
     }
-    .topper-badge {
-        font-size: 2rem;
+    h1, h2, h3, h4 {
+        margin-bottom: 0.5rem;
     }
-    .performance-table {
+    .section {
+        margin-bottom: 2rem;
+    }
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+    .stat {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        text-align: center;
+        border-radius: 6px;
+        background: white;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
         font-size: 0.9rem;
     }
-    .sticky-header {
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 10;
+    th, td {
+        border: 1px solid #eee;
+        padding: 0.5rem;
+        text-align: left;
     }
+    th {
+        background: #f9f9f9;
+        font-weight: 600;
+    }
+    .text-muted {
+        color: #777;
+        font-size: 0.85rem;
+    }
+    .badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    .bg-success { background: #d4edda; }
+    .bg-danger { background: #f8d7da; }
+    .progress {
+        background: #eee;
+        height: 14px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+    }
+    .bg-bar-success { background: #28a745; }
+    .bg-bar-danger { background: #dc3545; }
 </style>
 
 <div class="nav">
     <a href="/">Home</a>
-    <a href="/quiz/">All Quizzes</a>
-    <a href="/admin/">Admin Panel</a>
-    <a href="/quiz/{{ quiz.id }}/">Back to Quiz</a>
+    <a href="{% url 'quiz_list' %}">Quizzes</a>
+    <a href="{% url 'student_dashboard' %}">Dashboard</a>
+    {% if user.is_authenticated %}
+        {% if user.is_staff %}
+        <a href="/admin/" style="float: right;">Admin</a>
+        {% endif %}
+        <span style="float: right; margin-right: 20px;">Welcome, {{ user.username }}</span>
+        <a href="{% url 'student_logout' %}" style="float: right; margin-right: 20px;">Logout</a>
+    {% endif %}
 </div>
 
 <div class="container">
-    <div class="card">
-        <h1>📊 Quiz Analytics: {{ quiz.title }}</h1>
-        <p class="text-muted">Comprehensive performance insights and statistics</p>
-        <hr>
-        
-        <!-- Overview Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-                <div class="card stat-card border-primary text-center">
-                    <div class="card-body">
-                        <h2 class="text-primary">{{ total_attempts }}</h2>
-                        <p class="text-muted mb-0">Total Attempts</p>
-                    </div>
-                </div>
+
+    <h1>Quiz Analytics: {{ quiz.title }}</h1>
+    <p class="text-muted">Performance overview</p>
+
+    <!-- Overview -->
+    <div class="section">
+        <div class="stats">
+            <div class="stat">
+                <h2>{{ total_attempts }}</h2>
+                <p>Total Attempts</p>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card stat-card border-success text-center">
-                    <div class="card-body">
-                        <h2 class="text-success">{{ unique_students }}</h2>
-                        <p class="text-muted mb-0">Students Participated</p>
-                    </div>
-                </div>
+            <div class="stat">
+                <h2>{{ unique_students }}</h2>
+                <p>Students</p>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card stat-card border-info text-center">
-                    <div class="card-body">
-                        <h2 class="text-info">{{ avg_score }}%</h2>
-                        <p class="text-muted mb-0">Average Score</p>
-                    </div>
-                </div>
+            <div class="stat">
+                <h2>{{ avg_score }}%</h2>
+                <p>Average Score</p>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card stat-card border-warning text-center">
-                    <div class="card-body">
-                        <h2 class="text-warning">{{ pass_rate }}%</h2>
-                        <p class="text-muted mb-0">Pass Rate</p>
-                    </div>
-                </div>
+            <div class="stat">
+                <h2>{{ pass_rate }}%</h2>
+                <p>Pass Rate</p>
             </div>
-        </div>
-        
-        {% if topper %}
-        <!-- Topper Section -->
-        <div class="card bg-light mb-4">
-            <div class="card-body text-center">
-                <span class="topper-badge">🏆</span>
-                <h3>Top Performer</h3>
-                <h4>{{ topper.student.get_full_name|default:topper.student.username }}</h4>
-                <p class="lead">
-                    <strong>{{ topper.percentage|floatformat:2 }}%</strong> 
-                    ({{ topper.score }}/{{ quiz.get_total_marks }} marks)
-                </p>
-                <small class="text-muted">Completed on {{ topper.start_time|date:"F d, Y at g:i A" }}</small>
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Time Analytics -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">⏱️ Time Analysis</h4>
-            </div>
-            <div class="card-body">
-                <div class="row text-center mb-3">
-                    <div class="col-md-4">
-                        <h5>Average Time</h5>
-                        <p class="lead">{{ avg_duration_display }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>Quiz Duration</h5>
-                        <p class="lead">{{ quiz.duration_minutes }} minutes</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>Completion Rate</h5>
-                        <p class="lead">{{ total_attempts }} attempts</p>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>⚡ Fastest Completions</h5>
-                        <table class="table table-sm performance-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Student</th>
-                                    <th>Time</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in fastest_attempts %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ item.attempt.student.get_full_name|default:item.attempt.student.username }}</td>
-                                    <td><strong>{{ item.duration_display }}</strong></td>
-                                    <td>{{ item.attempt.percentage|floatformat:1 }}%</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-muted">No data available</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <h5>🐌 Slowest Completions</h5>
-                        <table class="table table-sm performance-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Student</th>
-                                    <th>Time</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in slowest_attempts %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ item.attempt.student.get_full_name|default:item.attempt.student.username }}</td>
-                                    <td><strong>{{ item.duration_display }}</strong></td>
-                                    <td>{{ item.attempt.percentage|floatformat:1 }}%</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-muted">No data available</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Top 10% Students -->
-        {% if top_10_percent %}
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">🌟 Top {{ top_10_percent_count }} Student{{ top_10_percent_count|pluralize }} (Top 10%)</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-striped performance-table">
-                    <thead class="table-light sticky-header">
-                        <tr>
-                            <th>Rank</th>
-                            <th>Student Name</th>
-                            <th>Username</th>
-                            <th>Best Score</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for attempt in top_10_percent %}
-                        <tr>
-                            <td>
-                                {% if forloop.counter == 1 %}🥇
-                                {% elif forloop.counter == 2 %}🥈
-                                {% elif forloop.counter == 3 %}🥉
-                                {% else %}{{ forloop.counter }}{% endif %}
-                            </td>
-                            <td><strong>{{ attempt.student.get_full_name|default:"—" }}</strong></td>
-                            <td>{{ attempt.student.username }}</td>
-                            <td>
-                                <div class="progress" style="height: 25px; width: 100px;">
-                                    <div class="progress-bar bg-success" role="progressbar" 
-                                         style="width: {{ attempt.percentage }}%">
-                                        {{ attempt.percentage|floatformat:1 }}%
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ attempt.is_passed|yesno:'success,danger' }}">
-                                    {{ attempt.is_passed|yesno:"Passed,Failed" }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- All Student Performance -->
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h4 class="mb-0">📈 Student Performance Summary</h4>
-            </div>
-            <div class="card-body">
-                <div style="max-height: 500px; overflow-y: auto;">
-                    <table class="table table-hover performance-table">
-                        <thead class="table-light sticky-header">
-                            <tr>
-                                <th>Rank</th>
-                                <th>Student</th>
-                                <th>Attempts</th>
-                                <th>Best Score</th>
-                                <th>Latest Score</th>
-                                <th>Average</th>
-                                <th>Improvement</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for perf in student_performance %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>
-                                    <strong>{{ perf.student.get_full_name|default:perf.student.username }}</strong>
-                                    <br><small class="text-muted">{{ perf.student.username }}</small>
-                                </td>
-                                <td>{{ perf.total_attempts }}</td>
-                                <td><strong>{{ perf.best_score|floatformat:1 }}%</strong></td>
-                                <td>{{ perf.latest_score|floatformat:1 }}%</td>
-                                <td>{{ perf.avg_score|floatformat:1 }}%</td>
-                                <td>
-                                    {% if perf.improvement > 0 %}
-                                        <span class="text-success">↑ {{ perf.improvement|floatformat:1 }}%</span>
-                                    {% elif perf.improvement < 0 %}
-                                        <span class="text-danger">↓ {{ perf.improvement|floatformat:1 }}%</span>
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ perf.passed|yesno:'success,danger' }}">
-                                        {{ perf.passed|yesno:"Passed,Failed" }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="8" class="text-center text-muted">No student data available</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Score Distribution -->
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-warning">
-                        <h4 class="mb-0">📊 Score Distribution</h4>
-                    </div>
-                    <div class="card-body">
-                        {% for range in score_distribution %}
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-1">
-                                <strong>{{ range.range }} - {{ range.label }}</strong>
-                                <span class="badge bg-primary">{{ range.count }} student{{ range.count|pluralize }}</span>
-                            </div>
-                            <div class="progress" style="height: 30px;">
-                                <div class="progress-bar" role="progressbar" 
-                                     style="width: {% widthratio range.count total_attempts 100 %}%">
-                                    {% widthratio range.count total_attempts 100 %}%
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Question Analysis -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-secondary text-white">
-                        <h4 class="mb-0">❓ Question Difficulty Analysis</h4>
-                    </div>
-                    <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-                        {% for q_analysis in question_analysis %}
-                        <div class="mb-3 p-2 border rounded">
-                            <div class="d-flex justify-content-between mb-1">
-                                <strong>Question {{ forloop.counter }}</strong>
-                                <span class="badge bg-{{ q_analysis.difficulty|lower }}
-                                    {% if q_analysis.difficulty == 'Easy' %}success
-                                    {% elif q_analysis.difficulty == 'Medium' %}warning
-                                    {% else %}danger{% endif %}">
-                                    {{ q_analysis.difficulty }}
-                                </span>
-                            </div>
-                            <div class="progress mb-1" style="height: 20px;">
-                                <div class="progress-bar 
-                                    {% if q_analysis.accuracy >= 70 %}bg-success
-                                    {% elif q_analysis.accuracy >= 40 %}bg-warning
-                                    {% else %}bg-danger{% endif %}" 
-                                     role="progressbar" 
-                                     style="width: {{ q_analysis.accuracy }}%">
-                                    {{ q_analysis.accuracy }}%
-                                </div>
-                            </div>
-                            <small class="text-muted">
-                                Correct: {{ q_analysis.correct_answers }}/{{ q_analysis.total_answers }} 
-                                ({{ q_analysis.accuracy }}% accuracy)
-                            </small>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">No question data available</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Recent Attempts -->
-        <div class="card mb-4">
-            <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">🕐 Recent Attempts (Last 20)</h4>
-            </div>
-            <div class="card-body">
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-sm table-hover performance-table">
-                        <thead class="table-light sticky-header">
-                            <tr>
-                                <th>Student</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Status</th>
-                                <th>Date & Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for attempt in recent_attempts %}
-                            <tr>
-                                <td>{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
-                                <td>{{ attempt.score }}/{{ quiz.get_total_marks }}</td>
-                                <td>
-                                    <div class="progress" style="height: 20px; width: 80px;">
-                                        <div class="progress-bar 
-                                            {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}" 
-                                             style="width: {{ attempt.percentage }}%">
-                                            {{ attempt.percentage|floatformat:0 }}%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ attempt.is_passed|yesno:'success,danger' }}">
-                                        {{ attempt.is_passed|yesno:"Passed,Failed" }}
-                                    </span>
-                                </td>
-                                <td>{{ attempt.start_time|date:"M d, Y - g:i A" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted">No attempts yet</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="text-center mt-4">
-            <a href="/quiz/{{ quiz.id }}/" class="btn btn-primary">Back to Quiz</a>
-            <a href="/admin/pages/{{ quiz.id }}/edit/" class="btn btn-secondary">Edit Quiz</a>
         </div>
     </div>
+
+    {% if topper %}
+    <!-- Topper -->
+    <div class="section">
+        <h3>Top Performer</h3>
+        <p><strong>{{ topper.student.get_full_name|default:topper.student.username }}</strong> — {{ topper.percentage|floatformat:1 }}% ({{ topper.score }}/{{ quiz.get_total_marks }})</p>
+        <p class="text-muted">Completed on {{ topper.start_time|date:"F d, Y - g:i A" }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Time Analytics -->
+    <div class="section">
+        <h3>Time Analysis</h3>
+        <table>
+            <tr>
+                <th>Average Time</th>
+                <th>Quiz Duration</th>
+                <th>Completion Attempts</th>
+            </tr>
+            <tr>
+                <td>{{ avg_duration_display }}</td>
+                <td>{{ quiz.duration_minutes }} min</td>
+                <td>{{ total_attempts }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Top 10% -->
+    {% if top_10_percent %}
+    <div class="section">
+        <h3>Top {{ top_10_percent_count }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th><th>Student</th><th>Score</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attempt in top_10_percent %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
+                    <td>{{ attempt.percentage|floatformat:1 }}%</td>
+                    <td>
+                        <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ attempt.is_passed|yesno:"Passed,Failed" }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- All Student Performance -->
+    <div class="section">
+        <h3>Student Performance</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th><th>Student</th><th>Attempts</th><th>Best</th><th>Latest</th><th>Average</th><th>Improvement</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for perf in student_performance %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ perf.student.get_full_name|default:perf.student.username }}</td>
+                    <td>{{ perf.total_attempts }}</td>
+                    <td>{{ perf.best_score|floatformat:1 }}%</td>
+                    <td>{{ perf.latest_score|floatformat:1 }}%</td>
+                    <td>{{ perf.avg_score|floatformat:1 }}%</td>
+                    <td>
+                        {% if perf.improvement > 0 %}
+                            +{{ perf.improvement|floatformat:1 }}%
+                        {% elif perf.improvement < 0 %}
+                            {{ perf.improvement|floatformat:1 }}%
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if perf.passed %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ perf.passed|yesno:"Passed,Failed" }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8">No data</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recent Attempts -->
+    <div class="section">
+        <h3>Recent Attempts</h3>
+        <table>
+            <thead>
+                <tr><th>Student</th><th>Score</th><th>Percentage</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+                {% for attempt in recent_attempts %}
+                <tr>
+                    <td>{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
+                    <td>{{ attempt.score }}/{{ quiz.get_total_marks }}</td>
+                    <td>{{ attempt.percentage|floatformat:1 }}%</td>
+                    <td>
+                        <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ attempt.is_passed|yesno:"Passed,Failed" }}
+                        </span>
+                    </td>
+                    <td>{{ attempt.start_time|date:"M d, Y - g:i A" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No attempts</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section" style="text-align:center;">
+        <a href="/quiz/{{ quiz.id }}/">Back to Quiz</a> |
+        <a href="/admin/pages/{{ quiz.id }}/edit/">Edit Quiz</a>
+    </div>
+
 </div>
 {% endblock %}
