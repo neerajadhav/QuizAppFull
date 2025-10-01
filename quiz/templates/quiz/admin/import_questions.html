@@ -1,0 +1,296 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n wagtailadmin_tags %}
+
+{% block titletag %}Import Questions - {{ quiz.title }}{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        .import-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .import-header {
+            margin-bottom: 2rem;
+        }
+        
+        .import-header h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .import-header .quiz-name {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            background: #f9f9f9;
+        }
+        
+        .upload-box:hover {
+            border-color: #007d7e;
+            background: #f0f7f7;
+        }
+        
+        .file-input-wrapper {
+            margin: 1rem 0;
+        }
+        
+        .info-section {
+            background: #e8f4f8;
+            border-left: 4px solid #007d7e;
+            padding: 1rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .info-section h3 {
+            margin-top: 0;
+            color: #007d7e;
+        }
+        
+        .csv-format {
+            background: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .csv-format table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .csv-format th,
+        .csv-format td {
+            padding: 0.5rem;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .csv-format th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .button-group {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .example-section {
+            margin-top: 2rem;
+        }
+        
+        .example-box {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .example-box h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .example-box pre {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        
+        .note {
+            color: #666;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        .supported-types {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .supported-types li {
+            padding: 0.5rem;
+            background: white;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            border-left: 3px solid #007d7e;
+        }
+        
+        .supported-types li strong {
+            color: #007d7e;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="import-container">
+        <header class="import-header">
+            <h1>{% trans "Import Questions from CSV" %}</h1>
+            <p class="quiz-name">Quiz: <strong>{{ quiz.title }}</strong></p>
+        </header>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="upload-box">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin: 0 auto; color: #007d7e;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Upload CSV File</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                </div>
+                <p class="note">Select a CSV file containing your questions</p>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="button button-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="vertical-align: middle; margin-right: 5px;">
+                        <polyline points="16 16 12 12 8 16"></polyline>
+                        <line x1="12" y1="12" x2="12" y2="21"></line>
+                        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                    </svg>
+                    Import Questions
+                </button>
+                <a href="{% url 'wagtailadmin_pages:edit' quiz.id %}" class="button button-secondary">Cancel</a>
+            </div>
+        </form>
+
+        <div class="info-section">
+            <h3>CSV Format Requirements</h3>
+            <p>Your CSV file must include the following columns:</p>
+            
+            <div class="csv-format">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>question_text</code></td>
+                            <td>✓ Yes</td>
+                            <td>The question text</td>
+                        </tr>
+                        <tr>
+                            <td><code>question_type</code></td>
+                            <td>✓ Yes</td>
+                            <td>Type: single, multiple, true_false, short_answer</td>
+                        </tr>
+                        <tr>
+                            <td><code>marks</code></td>
+                            <td>✓ Yes</td>
+                            <td>Points for this question (positive integer)</td>
+                        </tr>
+                        <tr>
+                            <td><code>option_1</code></td>
+                            <td>✓ Yes</td>
+                            <td>First answer option</td>
+                        </tr>
+                        <tr>
+                            <td><code>option_1_correct</code></td>
+                            <td>✓ Yes</td>
+                            <td>true/false - Is this option correct?</td>
+                        </tr>
+                        <tr>
+                            <td><code>option_2</code> ... <code>option_10</code></td>
+                            <td>No</td>
+                            <td>Additional answer options (up to 10)</td>
+                        </tr>
+                        <tr>
+                            <td><code>option_2_correct</code> ... <code>option_10_correct</code></td>
+                            <td>No</td>
+                            <td>true/false for each option</td>
+                        </tr>
+                        <tr>
+                            <td><code>explanation</code></td>
+                            <td>No</td>
+                            <td>Explanation shown after submission</td>
+                        </tr>
+                        <tr>
+                            <td><code>is_required</code></td>
+                            <td>No</td>
+                            <td>true/false (default: true)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>Supported Question Types</h3>
+            <ul class="supported-types">
+                <li>
+                    <strong>Single Choice (MCQ)</strong> - Use: <code>single</code>, <code>mcq</code>, or <code>single_choice</code><br>
+                    <span class="note">Only one correct answer allowed</span>
+                </li>
+                <li>
+                    <strong>Multiple Choice</strong> - Use: <code>multiple</code>, <code>multi</code>, or <code>multiple_choice</code><br>
+                    <span class="note">Multiple correct answers allowed</span>
+                </li>
+                <li>
+                    <strong>True/False</strong> - Use: <code>true_false</code>, <code>tf</code>, or <code>true/false</code><br>
+                    <span class="note">Two options: one must be correct</span>
+                </li>
+                <li>
+                    <strong>Short Answer</strong> - Use: <code>short_answer</code>, <code>short</code><br>
+                    <span class="note">Text-based answer (manual grading)</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="example-section">
+            <h3>Example CSV Format</h3>
+            
+            <div class="example-box">
+                <h4>Example 1: Single Choice Question</h4>
+                <pre>question_text,question_type,marks,option_1,option_1_correct,option_2,option_2_correct,option_3,option_3_correct,option_4,option_4_correct,explanation
+"What is 2+2?",single,1,"3",false,"4",true,"5",false,"6",false,"Basic addition: 2+2 equals 4"</pre>
+            </div>
+
+            <div class="example-box">
+                <h4>Example 2: Multiple Choice Question</h4>
+                <pre>question_text,question_type,marks,option_1,option_1_correct,option_2,option_2_correct,option_3,option_3_correct,explanation
+"Select all prime numbers",multiple,2,"2",true,"3",true,"4",false,"All prime numbers less than 5"</pre>
+            </div>
+
+            <div class="example-box">
+                <h4>Example 3: True/False Question</h4>
+                <pre>question_text,question_type,marks,option_1,option_1_correct,option_2,option_2_correct
+"Python is a programming language",true_false,1,"True",true,"False",false</pre>
+            </div>
+        </div>
+
+        <div class="info-section" style="background: #fff3cd; border-left-color: #ffc107;">
+            <h3>⚠️ Important Notes</h3>
+            <ul>
+                <li>The first row must contain column headers</li>
+                <li>For single choice questions, only one option should be marked as correct</li>
+                <li>For multiple choice questions, one or more options can be correct</li>
+                <li>Use quotes around text that contains commas</li>
+                <li>Empty rows will be skipped</li>
+                <li>Questions will be added to the end of existing questions</li>
+                <li>If there are errors, valid questions will still be imported</li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}

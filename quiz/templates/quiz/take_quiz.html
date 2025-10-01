@@ -249,11 +249,27 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        user-select: none;
     }
     
     .option-item:hover {
         background-color: #f8f9fa;
         border-color: #3498db;
+        transform: translateX(5px);
+    }
+    
+    .option-item.selected {
+        background-color: #e3f2fd;
+        border-color: #3498db;
+        border-width: 2px;
+    }
+    
+    .option-item input[type="radio"],
+    .option-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
     }
     
     .option-item input[type="radio"]:checked ~ label,
@@ -272,6 +288,7 @@
         flex: 1;
         margin: 0;
         font-size: 15px;
+        line-height: 1.6;
     }
     
     .answer-textarea {
@@ -1042,19 +1059,54 @@ function markAnswered(questionNum) {
 // Initialize
 showQuestion(1);
 
+// Add visual feedback for selected options
+function updateOptionStyles() {
+    document.querySelectorAll('.option-item').forEach(item => {
+        const input = item.querySelector('input[type="radio"], input[type="checkbox"]');
+        if (input && input.checked) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// Call updateOptionStyles whenever an input changes
+document.addEventListener('change', function(e) {
+    if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
+        // For radio buttons, remove 'selected' from all options in the same group
+        if (e.target.type === 'radio') {
+            const name = e.target.name;
+            document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+                radio.closest('.option-item').classList.remove('selected');
+            });
+        }
+        updateOptionStyles();
+    }
+});
+
+// Initialize option styles on page load
+updateOptionStyles();
+
 // Make option items clickable
 document.addEventListener('click', function(e) {
     const optionItem = e.target.closest('.option-item');
     if (optionItem) {
         const input = optionItem.querySelector('input[type="radio"], input[type="checkbox"]');
-        if (input && e.target !== input) {
+        const label = optionItem.querySelector('label');
+        
+        // Only handle the click if it's not directly on the input or label
+        // (they handle themselves properly)
+        if (input && e.target !== input && e.target !== label) {
             if (input.type === 'radio') {
                 input.checked = true;
+                // Trigger the onchange event to mark question as answered
+                input.dispatchEvent(new Event('change'));
             } else if (input.type === 'checkbox') {
                 input.checked = !input.checked;
+                // Trigger the onchange event to mark question as answered
+                input.dispatchEvent(new Event('change'));
             }
-            // Trigger the onchange event to mark question as answered
-            input.dispatchEvent(new Event('change'));
         }
     }
 });
