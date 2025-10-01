@@ -6,7 +6,50 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Avg, Count, Q
 from .models import Quiz, QuizAttempt, StudentAnswer, Question, AnswerOption
+from .forms import StudentRegistrationForm, TeacherRegistrationForm, LoginForm
 import random
+
+
+def student_register(request):
+    """Student registration view"""
+    if request.user.is_authenticated:
+        return redirect('quiz_list')
+    
+    if request.method == 'POST':
+        form = StudentRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'Registration successful! You can now login.')
+            return redirect('student_login')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = StudentRegistrationForm()
+    
+    return render(request, 'quiz/student_register.html', {'form': form})
+
+
+def teacher_register(request):
+    """Teacher registration view"""
+    if request.user.is_authenticated:
+        return redirect('quiz_list')
+    
+    if request.method == 'POST':
+        form = TeacherRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'Registration successful! You can now login to access the admin panel.')
+            return redirect('student_login')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = TeacherRegistrationForm()
+    
+    return render(request, 'quiz/teacher_register.html', {'form': form})
 
 
 def student_login(request):
@@ -21,8 +64,13 @@ def student_login(request):
         
         if user is not None:
             login(request, user)
-            messages.success(request, f'Welcome back, {user.username}!')
-            return redirect('quiz_list')
+            messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+            
+            # Redirect based on user role
+            if user.is_staff:
+                return redirect('/admin/')
+            else:
+                return redirect('quiz_list')
         else:
             messages.error(request, 'Invalid username or password.')
     

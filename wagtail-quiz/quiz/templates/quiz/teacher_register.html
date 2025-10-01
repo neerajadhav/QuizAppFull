@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 500px; margin: 30px auto;">
+        <h1>Teacher Registration</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="message message-error">
+                    <strong>Please correct the errors below:</strong>
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <label for="{{ form.username.id_for_label }}">Username: *</label>
+            {{ form.username }}
+            {% if form.username.help_text %}
+            <small style="display: block; margin-bottom: 10px; color: #666;">{{ form.username.help_text }}</small>
+            {% endif %}
+            
+            <label for="{{ form.email.id_for_label }}">Email: *</label>
+            {{ form.email }}
+            
+            <label for="{{ form.first_name.id_for_label }}">First Name: *</label>
+            {{ form.first_name }}
+            
+            <label for="{{ form.last_name.id_for_label }}">Last Name: *</label>
+            {{ form.last_name }}
+            
+            <label for="{{ form.employee_id.id_for_label }}">Employee ID: *</label>
+            {{ form.employee_id }}
+            
+            <label for="{{ form.department.id_for_label }}">Department:</label>
+            {{ form.department }}
+            
+            <label for="{{ form.phone.id_for_label }}">Phone Number:</label>
+            {{ form.phone }}
+            {% if form.phone.help_text %}
+            <small style="display: block; margin-bottom: 10px; color: #666;">{{ form.phone.help_text }}</small>
+            {% endif %}
+            
+            <label for="{{ form.password1.id_for_label }}">Password: *</label>
+            {{ form.password1 }}
+            {% if form.password1.help_text %}
+            <small style="display: block; margin-bottom: 10px; color: #666;">{{ form.password1.help_text }}</small>
+            {% endif %}
+            
+            <label for="{{ form.password2.id_for_label }}">Confirm Password: *</label>
+            {{ form.password2 }}
+            {% if form.password2.help_text %}
+            <small style="display: block; margin-bottom: 10px; color: #666;">{{ form.password2.help_text }}</small>
+            {% endif %}
+            
+            <div class="message" style="background-color: #ffffcc; border-color: #ffcc00; margin-top: 15px;">
+                <strong>Note:</strong> Teacher accounts require admin approval before gaining full access to quiz management features.
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Register as Teacher</button>
+        </form>
+        
+        <p style="margin-top: 20px; text-align: center;">
+            Already have an account? <a href="{% url 'student_login' %}">Login here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
