@@ -13,19 +13,37 @@ body {
     min-height: 100vh;
     margin: 0 auto;
     padding: 0 15px;
-    color: #231f20;
-    font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
-    line-height: 1.25;
+    color: #e0e0e0;
+    background: #0a0a0a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
 }
 
 a {
     background-color: transparent;
-    color: #308282;
-    text-decoration: underline;
+    color: #8b5cf6;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 a:hover {
-    color: #ea1b10;
+    color: #a78bfa;
+}
+
+a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    transition: width 0.3s ease;
+}
+
+a:hover::after {
+    width: 100%;
 }
 
 h1,
@@ -48,9 +66,9 @@ svg:not(:root) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e6e6e6;
+    padding-top: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {
@@ -65,20 +83,23 @@ svg:not(:root) {
 .figure-logo {
     max-width: 150px;
     max-height: 55.1px;
+    filter: brightness(0) invert(1);
 }
 
 .release-notes {
     font-size: 14px;
+    color: #b0b0b0;
 }
 
 .main {
-    padding: 40px 0;
+    padding: 60px 0;
     margin: 0 auto;
     text-align: center;
 }
 
 .figure-space {
     max-width: 265px;
+    filter: brightness(0.9) sepia(1) hue-rotate(220deg) saturate(3);
 }
 
 @keyframes pos {
@@ -91,60 +112,93 @@ svg:not(:root) {
 }
 
 .egg {
-    fill: #43b1b0;
+    fill: #6366f1;
     animation: pos 3s ease infinite;
     transform: translateY(50px);
     transform-origin: 50% 80%;
 }
 
 .main-text {
-    max-width: 400px;
+    max-width: 500px;
     margin: 5px auto;
+    background: rgba(20, 20, 20, 0.6);
+    padding: 40px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .main-text h1 {
-    font-size: 22px;
+    font-size: 28px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .main-text p {
-    margin: 15px auto 0;
+    margin: 20px auto 0;
+    color: #b0b0b0;
+    line-height: 1.8;
 }
 
 .footer {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    border-top: 1px solid #e6e6e6;
-    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 10px;
+    margin-top: 40px;
 }
 
 .option {
     display: block;
-    padding: 10px 10px 10px 34px;
+    padding: 20px 20px 20px 44px;
     position: relative;
     text-decoration: none;
+    background: rgba(20, 20, 20, 0.4);
+    border-radius: 12px;
+    margin: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.option:hover {
+    background: rgba(30, 30, 30, 0.6);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
 }
 
 .option svg {
     width: 24px;
     height: 24px;
-    fill: gray;
-    border: 1px solid #d9d9d9;
+    fill: #6366f1;
+    border: 2px solid rgba(99, 102, 241, 0.3);
     padding: 5px;
-    border-radius: 100%;
-    top: 10px;
-    inset-inline-start: 0;
+    border-radius: 50%;
+    top: 20px;
+    inset-inline-start: 10px;
     position: absolute;
+    transition: all 0.3s ease;
+}
+
+.option:hover svg {
+    fill: #8b5cf6;
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: rotate(10deg);
 }
 
 .option h2 {
-    font-size: 19px;
-    text-decoration: underline;
+    font-size: 20px;
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
 .option p {
     padding-top: 3px;
-    color: #231f20;
+    color: #b0b0b0;
     font-size: 15px;
     font-weight: 300;
 }

@@ -49,7 +49,7 @@
         <h2>Answer Review</h2>
         
         {% for answer_data in answers %}
-        <div class="question-block" style="{% if answer_data.is_correct %}border-left: 4px solid #28a745;{% else %}border-left: 4px solid #dc3545;{% endif %}">
+        <div class="question-block" style="{% if answer_data.is_correct %}border-left: 4px solid #10b981;{% else %}border-left: 4px solid #ef4444;{% endif %}">
             <h3>Question {{ forloop.counter }}
                 {% if answer_data.is_correct %}
                     <span class="badge badge-success">✓ Correct</span>
@@ -67,24 +67,24 @@
                 {% for option in answer_data.selected_options %}
                     <p>• {{ option.option_text }}</p>
                 {% empty %}
-                    <p>No answer selected</p>
+                    <p style="color: #888;">No answer selected</p>
                 {% endfor %}
                 
                 <p><strong>Correct Answer:</strong></p>
                 {% for option in answer_data.correct_options %}
-                    <p style="color: #28a745;">• {{ option.option_text }}</p>
+                    <p style="color: #6ee7b7;">• {{ option.option_text }}</p>
                 {% endfor %}
             {% else %}
                 <p><strong>Your Answer:</strong></p>
-                <p style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">
+                <p style="background: rgba(30, 30, 30, 0.6); padding: 12px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
                     {{ answer_data.text_answer|default:"No answer provided" }}
                 </p>
             {% endif %}
             
             {% if answer_data.question.explanation %}
-            <div style="background: #e7f3ff; padding: 10px; margin-top: 10px; border-left: 4px solid #0066cc;">
-                <strong>Explanation:</strong><br>
-                {{ answer_data.question.explanation|safe }}
+            <div style="background: rgba(99, 102, 241, 0.1); padding: 12px; margin-top: 12px; border-left: 4px solid #6366f1; border-radius: 8px;">
+                <strong style="color: #a5b4fc;">Explanation:</strong><br>
+                <span style="color: #b0b0b0;">{{ answer_data.question.explanation|safe }}</span>
             </div>
             {% endif %}
         </div>
