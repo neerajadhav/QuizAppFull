@@ -245,21 +245,30 @@ class QuizAttempt(models.Model):
             total_marks += question.marks
 
             # Check if answer is correct
+            is_answer_correct = False
+            
             if question.question_type == 'single':
                 selected_options = answer.selected_options.all()
                 if selected_options.count() == 1 and selected_options.first().is_correct:
                     earned_marks += question.marks
+                    is_answer_correct = True
             
             elif question.question_type == 'multiple':
                 selected_options = set(answer.selected_options.all())
                 correct_options = set(question.options.filter(is_correct=True))
                 if selected_options == correct_options:
                     earned_marks += question.marks
+                    is_answer_correct = True
             
             elif question.question_type == 'true_false':
                 selected_options = answer.selected_options.all()
                 if selected_options.count() == 1 and selected_options.first().is_correct:
                     earned_marks += question.marks
+                    is_answer_correct = True
+            
+            # Update the is_correct field on the answer
+            answer.is_correct = is_answer_correct
+            answer.save()
 
         self.score = earned_marks
         self.percentage = (earned_marks / total_marks * 100) if total_marks > 0 else 0
