@@ -21,9 +21,7 @@
             </div>
             {% if can_view_analytics %}
             <div>
-                <a href="{% url 'quiz_analytics' quiz.id %}" class="btn btn-primary" style="background-color: #007bff;">
-                    📊 View Analytics
-                </a>
+                <a href="{% url 'quiz_analytics' quiz.id %}" class="btn btn-primary">View Analytics</a>
             </div>
             {% endif %}
         </div>
@@ -49,7 +47,7 @@
         {% if can_attempt %}
             <a href="{% url 'start_quiz' quiz.id %}" class="btn btn-success">Start Quiz</a>
         {% else %}
-            <p style="color: red;">{{ message }}</p>
+            <p style="color: #e74c3c; font-weight: bold;">{{ message }}</p>
         {% endif %}
     </div>
     

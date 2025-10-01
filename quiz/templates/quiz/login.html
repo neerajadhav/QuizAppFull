@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="card" style="max-width: 400px; margin: 50px auto;">
+    <div class="card" style="max-width: 450px; margin: 0 auto;">
         <h1>Login</h1>
         
         {% if messages %}
@@ -28,11 +28,11 @@
         
         <hr>
         
-        <p style="text-align: center; margin: 20px 0;">
+        <p style="text-align: center;">
             <strong>Don't have an account?</strong>
         </p>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
             <a href="{% url 'student_register' %}" class="btn btn-success">Register as Student</a>
             <a href="{% url 'teacher_register' %}" class="btn">Register as Teacher</a>
         </div>

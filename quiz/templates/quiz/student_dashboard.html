@@ -9,8 +9,8 @@
         {% if user.is_staff %}
         <a href="/admin/" style="float: right;">Admin</a>
         {% endif %}
-        <span style="float: right; margin-right: 20px;">Welcome, {{ user.username }}</span>
         <a href="{% url 'student_logout' %}" style="float: right; margin-right: 20px;">Logout</a>
+        <span style="float: right; margin-right: 20px;">Welcome, {{ user.username }}</span>
     {% endif %}
 </div>
 

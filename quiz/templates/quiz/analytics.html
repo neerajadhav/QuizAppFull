@@ -2,154 +2,6 @@
 {% load static %}
 
 {% block content %}
-<style>
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: #0a0a0a;
-        color: #e0e0e0;
-    }
-    .container {
-        max-width: 1000px;
-        margin: 2rem auto;
-        padding: 1rem;
-    }
-    h1, h2, h3, h4 {
-        margin-bottom: 0.75rem;
-        color: #ffffff;
-        font-weight: 600;
-    }
-    h1 {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 32px;
-    }
-    .section {
-        margin-bottom: 2.5rem;
-        background: rgba(20, 20, 20, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        padding: 24px;
-    }
-    .stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1.25rem;
-    }
-    .stat {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1.5rem;
-        text-align: center;
-        border-radius: 12px;
-        background: rgba(20, 20, 20, 0.8);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    .stat::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #6366f1, #8b5cf6);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-    .stat:hover::before {
-        transform: scaleX(1);
-    }
-    .stat:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
-        border-color: rgba(99, 102, 241, 0.3);
-    }
-    .stat h2 {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 36px;
-        margin-bottom: 8px;
-    }
-    .stat p {
-        color: #b0b0b0;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 0.75rem;
-        font-size: 0.9rem;
-        background: rgba(20, 20, 20, 0.6);
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    th, td {
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 0.75rem;
-        text-align: left;
-    }
-    th {
-        background: rgba(30, 30, 30, 0.8);
-        font-weight: 600;
-        color: #b0b0b0;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.5px;
-    }
-    tbody tr {
-        transition: all 0.2s ease;
-    }
-    tbody tr:hover {
-        background: rgba(99, 102, 241, 0.08);
-    }
-    .text-muted {
-        color: #888;
-        font-size: 0.85rem;
-    }
-    .badge {
-        padding: 0.3rem 0.7rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .bg-success { 
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-    .bg-danger { 
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .progress {
-        background: rgba(30, 30, 30, 0.6);
-        height: 16px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .progress-bar {
-        height: 100%;
-        border-radius: 8px;
-        transition: width 0.6s ease;
-    }
-    .bg-bar-success { 
-        background: linear-gradient(90deg, #10b981, #059669);
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-    }
-    .bg-bar-danger { 
-        background: linear-gradient(90deg, #ef4444, #dc2626);
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-    }
-</style>
 
 <div class="nav">
     <a href="/">Home</a>
@@ -159,8 +11,8 @@
         {% if user.is_staff %}
         <a href="/admin/" style="float: right;">Admin</a>
         {% endif %}
-        <span style="float: right; margin-right: 20px;">Welcome, {{ user.username }}</span>
         <a href="{% url 'student_logout' %}" style="float: right; margin-right: 20px;">Logout</a>
+        <span style="float: right; margin-right: 20px;">Welcome, {{ user.username }}</span>
     {% endif %}
 </div>
 
@@ -169,22 +21,21 @@
     <h1>Quiz Analytics: {{ quiz.title }}</h1>
     <p class="text-muted">Performance overview</p>
 
-    <!-- Overview -->
     <div class="section">
         <div class="stats">
-            <div class="stat">
+            <div class="stat-card">
                 <h2>{{ total_attempts }}</h2>
                 <p>Total Attempts</p>
             </div>
-            <div class="stat">
+            <div class="stat-card">
                 <h2>{{ unique_students }}</h2>
                 <p>Students</p>
             </div>
-            <div class="stat">
+            <div class="stat-card">
                 <h2>{{ avg_score }}%</h2>
                 <p>Average Score</p>
             </div>
-            <div class="stat">
+            <div class="stat-card">
                 <h2>{{ pass_rate }}%</h2>
                 <p>Pass Rate</p>
             </div>
@@ -192,7 +43,6 @@
     </div>
 
     {% if topper %}
-    <!-- Topper -->
     <div class="section">
         <h3>Top Performer</h3>
         <p><strong>{{ topper.student.get_full_name|default:topper.student.username }}</strong> — {{ topper.percentage|floatformat:1 }}% ({{ topper.score }}/{{ quiz.get_total_marks }})</p>
@@ -200,7 +50,6 @@
     </div>
     {% endif %}
 
-    <!-- Time Analytics -->
     <div class="section">
         <h3>Time Analysis</h3>
         <table>
@@ -217,7 +66,6 @@
         </table>
     </div>
 
-    <!-- Top 10% -->
     {% if top_10_percent %}
     <div class="section">
         <h3>Top {{ top_10_percent_count }}</h3>
@@ -234,7 +82,7 @@
                     <td>{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
                     <td>{{ attempt.percentage|floatformat:1 }}%</td>
                     <td>
-                        <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                        <span class="badge badge-{% if attempt.is_passed %}success{% else %}danger{% endif %}">
                             {{ attempt.is_passed|yesno:"Passed,Failed" }}
                         </span>
                     </td>
@@ -245,7 +93,6 @@
     </div>
     {% endif %}
 
-    <!-- All Student Performance -->
     <div class="section">
         <h3>Student Performance</h3>
         <table>
@@ -271,7 +118,7 @@
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        <span class="badge {% if perf.passed %}bg-success{% else %}bg-danger{% endif %}">
+                        <span class="badge badge-{% if perf.passed %}success{% else %}danger{% endif %}">
                             {{ perf.passed|yesno:"Passed,Failed" }}
                         </span>
                     </td>
@@ -283,7 +130,6 @@
         </table>
     </div>
 
-    <!-- Recent Attempts -->
     <div class="section">
         <h3>Recent Attempts</h3>
         <table>
@@ -297,7 +143,7 @@
                     <td>{{ attempt.score }}/{{ quiz.get_total_marks }}</td>
                     <td>{{ attempt.percentage|floatformat:1 }}%</td>
                     <td>
-                        <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                        <span class="badge badge-{% if attempt.is_passed %}success{% else %}danger{% endif %}">
                             {{ attempt.is_passed|yesno:"Passed,Failed" }}
                         </span>
                     </td>

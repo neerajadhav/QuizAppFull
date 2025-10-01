@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/quiz.css' %}">
-{% endblock %}
-
 {% block content %}
 <div class="nav">
     <a href="/">Home</a>
@@ -19,6 +15,7 @@
         <a href="/admin/login/" style="float: right;">Login</a>
     {% endif %}
 </div>
+
 <div class="container">
     <h1>Available Quizzes</h1>
     
@@ -57,7 +54,7 @@
                     <button class="btn" disabled>{{ item.message }}</button>
                     {% endif %}
                     {% if item.can_view_analytics %}
-                    <a href="{% url 'quiz_analytics' item.quiz.id %}" class="btn btn-primary" style="background-color: #007bff;">📊 Analytics</a>
+                    <a href="{% url 'quiz_analytics' item.quiz.id %}" class="btn btn-primary">Analytics</a>
                     {% endif %}
                 </div>
             </div>
