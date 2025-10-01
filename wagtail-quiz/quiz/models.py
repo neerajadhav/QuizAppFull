@@ -64,9 +64,18 @@ class Quiz(Page):
         help_text="Quiz will be available until this date"
     )
     tags = ClusterTaggableManager(through=QuizTag, blank=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_quizzes',
+        help_text="Teacher who created this quiz"
+    )
     
     content_panels = Page.content_panels + [
         FieldPanel('description'),
+        FieldPanel('created_by'),
         MultiFieldPanel([
             FieldPanel('duration_minutes'),
             FieldPanel('pass_percentage'),
@@ -124,6 +133,109 @@ class Quiz(Page):
             return False, f"Maximum attempts ({self.max_attempts}) reached"
         
         return True, "You can attempt this quiz"
+    
+    def is_owner(self, user):
+        """Check if the user is the creator of this quiz"""
+        if not user or not user.is_authenticated:
+            return False
+        # Check both created_by field and owner field (Wagtail's built-in)
+        return self.created_by == user or self.owner == user
+    
+    def permissions_for_user(self, user):
+        """
+        Override Wagtail's permissions_for_user to restrict edit/delete to quiz creator
+        """
+        perms = super().permissions_for_user(user)
+        
+        # If user is a superuser, allow all permissions
+        if user.is_superuser:
+            return perms
+        
+        # If user is not the owner, remove edit and delete permissions
+        if not self.is_owner(user):
+            # Create a new UserPagePermissionsProxy object with restricted permissions
+            class RestrictedPermissions:
+                def __init__(self, original_perms):
+                    self.original_perms = original_perms
+                    self.page = original_perms.page
+                    self.user = original_perms.user
+                
+                def can_edit(self):
+                    return False
+                
+                def can_delete(self, ignore_bulk=False):
+                    return False
+                
+                def can_unpublish(self):
+                    return False
+                
+                def can_publish(self):
+                    return False
+                
+                def can_submit_for_moderation(self):
+                    return False
+                
+                def can_set_view_restrictions(self):
+                    return False
+                
+                def can_unschedule(self):
+                    return False
+                
+                def can_lock(self):
+                    return False
+                
+                def can_unlock(self):
+                    return False
+                
+                # Allow view permission
+                def can_view(self):
+                    return self.original_perms.can_view()
+                
+                def __getattr__(self, name):
+                    # For any other permissions, delegate to original
+                    return getattr(self.original_perms, name)
+            
+            return RestrictedPermissions(perms)
+        
+        return perms
+    
+    def can_edit_quiz(self, user):
+        """
+        Helper method to check if a user can edit this quiz
+        Returns (bool, str) - permission status and message
+        """
+        if not user or not user.is_authenticated:
+            return False, "You must be logged in"
+        
+        if not user.is_staff:
+            return False, "Only teachers can edit quizzes"
+        
+        if user.is_superuser:
+            return True, "Superuser can edit all quizzes"
+        
+        if self.is_owner(user):
+            return True, "You can edit your own quiz"
+        
+        return False, "You can only edit quizzes you created"
+    
+    def can_delete_quiz(self, user):
+        """
+        Helper method to check if a user can delete this quiz
+        Returns (bool, str) - permission status and message
+        """
+        if not user or not user.is_authenticated:
+            return False, "You must be logged in"
+        
+        if not user.is_staff:
+            return False, "Only teachers can delete quizzes"
+        
+        if user.is_superuser:
+            return True, "Superuser can delete all quizzes"
+        
+        if self.is_owner(user):
+            return True, "You can delete your own quiz"
+        
+        return False, "You can only delete quizzes you created"
 
 
 # Question Model

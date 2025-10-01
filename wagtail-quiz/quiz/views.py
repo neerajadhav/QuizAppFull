@@ -302,6 +302,12 @@ def quiz_analytics(request, quiz_id):
     
     quiz = get_object_or_404(Quiz, id=quiz_id)
     
+    # Check if user can view analytics for this quiz
+    # Only quiz owner or superuser can view analytics
+    if not request.user.is_superuser and not quiz.is_owner(request.user):
+        messages.error(request, 'You can only view analytics for quizzes you created.')
+        return redirect('quiz_list')
+    
     # Get all completed attempts
     attempts = QuizAttempt.objects.filter(quiz=quiz, is_completed=True)
     
