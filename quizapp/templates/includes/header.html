@@ -30,8 +30,8 @@
                     {% endif %}
                     <a href="{% url 'student_logout' %}" class="btn btn-outline-secondary btn-sm">Logout</a>
                 {% else %}
-                    <a href="/admin/login/" class="btn btn-primary btn-sm">Login</a>
-                    <a href="{% url 'student_register' %}" class="btn btn-outline-light btn-sm">Register</a>
+                    <a href="{% url 'student_login' %}" class="btn btn-primary btn-sm">Student Login</a>
+                    <a href="{% url 'student_register' %}" class="btn btn-outline-light btn-sm">Student Register</a>
                 {% endif %}
             </div>
         </div>
