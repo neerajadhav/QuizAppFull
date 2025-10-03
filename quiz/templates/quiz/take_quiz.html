@@ -104,7 +104,12 @@
       <div class="card nav-card shadow-sm">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
           <span><i class="bi bi-list-ol"></i> Questions</span>
-          <span class="badge bg-light text-dark" id="timer">--:--</span>
+          <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-warning text-dark d-none" id="warningBadge" title="Warnings issued">
+              <i class="bi bi-exclamation-triangle-fill"></i> <span id="warningCount">0</span>/3
+            </span>
+            <span class="badge bg-light text-dark" id="timer">--:--</span>
+          </div>
         </div>
         <div class="card-body">
           <div class="row row-cols-4 g-3" id="questionNav"></div>
@@ -168,6 +173,8 @@
   let focusWarningCount=0;const MAX_WARNINGS=3;let isProcessingWarning=false;let lastFocusTime=Date.now();
   let fullscreenModal,focusWarningModal;
   let remainingSeconds=0;let lastServerSync=0;
+  const warningBadge=document.getElementById('warningBadge');
+  const warningCountEl=document.getElementById('warningCount');
   
   // Load warning count from sessionStorage
   const attemptId=document.getElementById('quizApp').dataset.attempt;
@@ -175,6 +182,22 @@
   const storedWarnings=sessionStorage.getItem(warningKey);
   if(storedWarnings){
     focusWarningCount=parseInt(storedWarnings)||0;
+    if(focusWarningCount>0){
+      updateWarningDisplay();
+    }
+  }
+  
+  function updateWarningDisplay(){
+    warningCountEl.textContent=focusWarningCount;
+    if(focusWarningCount>0){
+      warningBadge.classList.remove('d-none');
+      if(focusWarningCount>=2){
+        warningBadge.classList.remove('bg-warning');
+        warningBadge.classList.add('bg-danger','text-white');
+      }
+    }else{
+      warningBadge.classList.add('d-none');
+    }
   }
 
   function fetchJSON(u,o){return fetch(u,o).then(r=>{if(!r.ok)throw r;return r.json();});}
@@ -281,7 +304,7 @@
   // Anti-cheating functions
   function enterFullscreen(){const elem=document.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{});}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen();}else if(elem.msRequestFullscreen){elem.msRequestFullscreen();}}
   function showFocusWarning(msg,shouldReload){return new Promise((resolve)=>{if(focusWarningModal){document.getElementById('focusWarningModalBody').innerHTML=msg;const btn=document.getElementById('focusWarningBtn');const handleClick=()=>{btn.removeEventListener('click',handleClick);focusWarningModal.hide();if(shouldReload){window.location.reload();}else{resolve();}};btn.addEventListener('click',handleClick);focusWarningModal.show();}else{resolve();}});}
-  async function handleFocusLoss(reason){if(isProcessingWarning)return;const timeSinceFocus=Date.now()-lastFocusTime;if(timeSinceFocus<1000)return;isProcessingWarning=true;focusWarningCount++;sessionStorage.setItem(warningKey,focusWarningCount.toString());if(focusWarningCount>=MAX_WARNINGS){await showFocusWarning('<strong>Final Warning #'+focusWarningCount+'</strong><br><br>You have reached the maximum number of warnings. Your quiz will be automatically submitted now.',false);saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{sessionStorage.removeItem(warningKey);if(r.redirect_url)window.location=r.redirect_url;}));}else{const remaining=MAX_WARNINGS-focusWarningCount;await showFocusWarning('<strong>Warning #'+focusWarningCount+' of '+MAX_WARNINGS+'</strong><br><br>'+reason+'<br><br>You have <strong>'+remaining+'</strong> warning'+(remaining>1?'s':'')+' remaining.',true);}isProcessingWarning=false;}
+  async function handleFocusLoss(reason){if(isProcessingWarning)return;const timeSinceFocus=Date.now()-lastFocusTime;if(timeSinceFocus<1000)return;isProcessingWarning=true;focusWarningCount++;sessionStorage.setItem(warningKey,focusWarningCount.toString());updateWarningDisplay();if(focusWarningCount>=MAX_WARNINGS){await showFocusWarning('<strong>Final Warning #'+focusWarningCount+'</strong><br><br>You have reached the maximum number of warnings. Your quiz will be automatically submitted now.',false);saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{sessionStorage.removeItem(warningKey);if(r.redirect_url)window.location=r.redirect_url;}));}else{const remaining=MAX_WARNINGS-focusWarningCount;await showFocusWarning('<strong>Warning #'+focusWarningCount+' of '+MAX_WARNINGS+'</strong><br><br>'+reason+'<br><br>You have <strong>'+remaining+'</strong> warning'+(remaining>1?'s':'')+' remaining.',true);}isProcessingWarning=false;}
   
   // Event listeners
   nextBtn.addEventListener('click',()=>{if(currentIndex<questionOrder.length-1){saveCurrent().then(()=>loadQuestion(currentIndex+1));}});
