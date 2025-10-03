@@ -1,29 +1,39 @@
 {% load static %}
-<header class="main-header">
-    <div class="header-container">
-        <div class="header-brand">
-            <a href="/" class="brand-link">QuizApp</a>
-        </div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">QuizApp</a>
         
-        <nav class="header-nav">
-            <a href="/" class="nav-link">Home</a>
-            <a href="{% url 'quiz_list' %}" class="nav-link">Quizzes</a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'student_dashboard' %}" class="nav-link">Dashboard</a>
-            {% endif %}
-        </nav>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         
-        <div class="header-actions">
-            {% if user.is_authenticated %}
-                <span class="user-info">{{ user.username }}</span>
-                {% if user.is_staff %}
-                    <a href="/admin/" class="header-btn header-btn-admin">Admin</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'quiz_list' %}">Quizzes</a>
+                </li>
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'student_dashboard' %}">Dashboard</a>
+                </li>
                 {% endif %}
-                <a href="{% url 'student_logout' %}" class="header-btn header-btn-secondary">Logout</a>
-            {% else %}
-                <a href="/admin/login/" class="header-btn header-btn-primary">Login</a>
-                <a href="{% url 'student_register' %}" class="header-btn header-btn-secondary">Register</a>
-            {% endif %}
+            </ul>
+            
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated %}
+                    <span class="navbar-text me-2">{{ user.username }}</span>
+                    {% if user.is_staff %}
+                        <a href="/admin/" class="btn btn-danger btn-sm">Admin</a>
+                    {% endif %}
+                    <a href="{% url 'student_logout' %}" class="btn btn-outline-secondary btn-sm">Logout</a>
+                {% else %}
+                    <a href="/admin/login/" class="btn btn-primary btn-sm">Login</a>
+                    <a href="{% url 'student_register' %}" class="btn btn-outline-light btn-sm">Register</a>
+                {% endif %}
+            </div>
         </div>
     </div>
-</header>
+</nav>

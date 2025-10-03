@@ -1,83 +1,111 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="result-header {% if attempt.is_passed %}passed{% else %}failed{% endif %}">
-        <h1>{% if attempt.is_passed %}PASSED{% else %}FAILED{% endif %}</h1>
-        <div class="result-score">{{ attempt.percentage|floatformat:1 }}%</div>
-        <p>You scored {{ attempt.score }} out of {{ quiz.get_total_marks }} marks</p>
-        <p>Pass mark: {{ quiz.pass_percentage }}%</p>
+<div class="container my-4">
+    <div class="alert {% if attempt.is_passed %}alert-success{% else %}alert-danger{% endif %} text-center py-4">
+        <h1 class="display-4 mb-3">{% if attempt.is_passed %}PASSED{% else %}FAILED{% endif %}</h1>
+        <div class="display-1 fw-bold mb-3">{{ attempt.percentage|floatformat:1 }}%</div>
+        <p class="mb-2">You scored {{ attempt.score }} out of {{ quiz.get_total_marks }} marks</p>
+        <p class="mb-0">Pass mark: {{ quiz.pass_percentage }}%</p>
     </div>
     
-    <div class="stats">
-        <div class="stat-card">
-            <h2>{{ attempt.score }}</h2>
-            <p>Your Score</p>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h2 class="text-primary display-4">{{ attempt.score }}</h2>
+                    <p class="text-muted">Your Score</p>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h2>{{ quiz.get_total_marks }}</h2>
-            <p>Total Marks</p>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h2 class="text-info display-4">{{ quiz.get_total_marks }}</h2>
+                    <p class="text-muted">Total Marks</p>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h2>{{ attempt.get_attempt_number }}</h2>
-            <p>Attempt Number</p>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h2 class="text-secondary display-4">{{ attempt.get_attempt_number }}</h2>
+                    <p class="text-muted">Attempt Number</p>
+                </div>
+            </div>
         </div>
     </div>
     
-    <div class="card">
-        <p><strong>Quiz:</strong> {{ quiz.title }}</p>
-        <p><strong>Started:</strong> {{ attempt.start_time|date:"M d, Y H:i" }}</p>
-        <p><strong>Completed:</strong> {{ attempt.end_time|date:"M d, Y H:i" }}</p>
-        
-        <a href="{% url 'quiz_list' %}" class="btn btn-primary">Back to Quizzes</a>
-        <a href="{% url 'student_dashboard' %}" class="btn">View Dashboard</a>
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Quiz:</strong> {{ quiz.title }}</p>
+            <p><strong>Started:</strong> {{ attempt.start_time|date:"M d, Y H:i" }}</p>
+            <p><strong>Completed:</strong> {{ attempt.end_time|date:"M d, Y H:i" }}</p>
+            
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'quiz_list' %}" class="btn btn-primary">Back to Quizzes</a>
+                <a href="{% url 'student_dashboard' %}" class="btn btn-outline-secondary">View Dashboard</a>
+            </div>
+        </div>
     </div>
     
     {% if show_answers %}
     <div class="card">
-        <h2>Answer Review</h2>
-        
-        {% for answer_data in answers %}
-        <div class="question-block" style="{% if answer_data.is_correct %}border-left: 3px solid #27ae60;{% else %}border-left: 3px solid #e74c3c;{% endif %}">
-            <h3>Question {{ forloop.counter }}
-                {% if answer_data.is_correct %}
-                    <span class="badge badge-success">Correct</span>
-                {% else %}
-                    <span class="badge badge-danger">Incorrect</span>
-                {% endif %}
-            </h3>
-            
-            <div class="question-text">
-                {{ answer_data.question.question_text|safe }}
-            </div>
-            
-            {% if answer_data.question.question_type != 'short_answer' %}
-                <p><strong>Your Answer:</strong></p>
-                {% for option in answer_data.selected_options %}
-                    <p>{{ option.option_text }}</p>
-                {% empty %}
-                    <p style="color: #7f8c8d;">No answer selected</p>
-                {% endfor %}
-                
-                <p><strong>Correct Answer:</strong></p>
-                {% for option in answer_data.correct_options %}
-                    <p style="color: #27ae60;">{{ option.option_text }}</p>
-                {% endfor %}
-            {% else %}
-                <p><strong>Your Answer:</strong></p>
-                <div style="background: #f9f9f9; padding: 12px; border: 1px solid #ddd; margin: 10px 0;">
-                    {{ answer_data.text_answer|default:"No answer provided" }}
-                </div>
-            {% endif %}
-            
-            {% if answer_data.question.explanation %}
-            <div style="background: #e8f4f8; padding: 12px; margin-top: 12px; border-left: 3px solid #3498db;">
-                <strong>Explanation:</strong><br>
-                {{ answer_data.question.explanation|safe }}
-            </div>
-            {% endif %}
+        <div class="card-header">
+            <h5 class="mb-0">Answer Review</h5>
         </div>
-        {% endfor %}
+        <div class="card-body">
+            {% for answer_data in answers %}
+            <div class="card mb-3 border-start border-3 {% if answer_data.is_correct %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h6 class="card-title">Question {{ forloop.counter }}</h6>
+                        {% if answer_data.is_correct %}
+                            <span class="badge bg-success">Correct</span>
+                        {% else %}
+                            <span class="badge bg-danger">Incorrect</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-light border-start border-primary border-3 mb-3">
+                        {{ answer_data.question.question_text|safe }}
+                    </div>
+                    
+                    {% if answer_data.question.question_type != 'short_answer' %}
+                        <div class="mb-3">
+                            <strong>Your Answer:</strong>
+                            {% for option in answer_data.selected_options %}
+                                <div class="mt-1">{{ option.option_text }}</div>
+                            {% empty %}
+                                <div class="text-muted mt-1">No answer selected</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Correct Answer:</strong>
+                            {% for option in answer_data.correct_options %}
+                                <div class="text-success mt-1">{{ option.option_text }}</div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <strong>Your Answer:</strong>
+                            <div class="bg-light p-3 border rounded mt-2">
+                                {{ answer_data.text_answer|default:"No answer provided" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if answer_data.question.explanation %}
+                    <div class="alert alert-info">
+                        <strong>Explanation:</strong><br>
+                        {{ answer_data.question.explanation|safe }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     {% endif %}
 </div>
