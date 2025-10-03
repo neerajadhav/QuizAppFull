@@ -167,6 +167,15 @@
   const timerEl=document.getElementById('timer');
   let focusWarningCount=0;const MAX_WARNINGS=3;let isProcessingWarning=false;let lastFocusTime=Date.now();
   let fullscreenModal,focusWarningModal;
+  let remainingSeconds=0;let lastServerSync=0;
+  
+  // Load warning count from sessionStorage
+  const attemptId=document.getElementById('quizApp').dataset.attempt;
+  const warningKey='quiz_warnings_'+attemptId;
+  const storedWarnings=sessionStorage.getItem(warningKey);
+  if(storedWarnings){
+    focusWarningCount=parseInt(storedWarnings)||0;
+  }
 
   function fetchJSON(u,o){return fetch(u,o).then(r=>{if(!r.ok)throw r;return r.json();});}
   function csrf(){const n='csrftoken';return document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||'';}
@@ -196,6 +205,11 @@
   function loadQuestion(i){currentIndex=i;const qid=questionOrder[i].id;fetchJSON(endpoints.question(qid)).then(d=>{if(!(qid in answers))answers[qid]={options:d.selected_option_ids,text:d.text_answer};renderQuestion(d.question);updateNav();});}
   function saveCurrent(){const q=questionOrder[currentIndex];if(!q)return Promise.resolve();const fd=new FormData();if(['single','multiple','true_false'].includes(q.type)){const inputs=panel.querySelectorAll('.answer-opt');const sel=[];inputs.forEach(inp=>{if(inp.checked)sel.push(inp.value);});answers[q.id].options=sel.map(x=>parseInt(x));sel.forEach(v=>fd.append('option_ids[]',v));}else if(q.type==='short_answer'){const ta=panel.querySelector('.answer-text');answers[q.id].text=ta.value;fd.append('text_answer',ta.value);}return fetchJSON(endpoints.answer(q.id),{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd}).catch(()=>{});}  
   function init(){
+    // Fetch initial status immediately for timer
+    fetchJSON(endpoints.status).then(s=>{
+      updateTimerFromServer(s);
+    }).catch(()=>{});
+    
     fetchJSON(endpoints.questions).then(d=>{
       questionOrder=d.questions;
       navEl.innerHTML='';
@@ -213,26 +227,61 @@
       });
       if(questionOrder.length)loadQuestion(0);
     });
+    
+    // Update status from server every 10 seconds
     setInterval(()=>{
       fetchJSON(endpoints.status).then(s=>{
-        const m=Math.floor(s.remaining_seconds/60);
-        const sec=s.remaining_seconds%60;
-        timerEl.textContent=m+':'+(sec<10?'0':'')+sec;
-        if(s.remaining_seconds<=60){
-          timerEl.parentElement.classList.add('timer-warning');
-        }
-        if(s.completed){
-          nextBtn.disabled=prevBtn.disabled=true;
-          finalizeBtn.disabled=true;
-        }
+        updateTimerFromServer(s);
       }).catch(()=>{});
     },10000);
+    
+    // Update displayed timer every second (client-side countdown)
+    setInterval(()=>{
+      if(remainingSeconds>0){
+        remainingSeconds--;
+        displayTimer();
+      }
+    },1000);
+  }
+  
+  function updateTimerFromServer(s){
+    remainingSeconds=s.remaining_seconds;
+    lastServerSync=Date.now();
+    displayTimer();
+    
+    if(s.remaining_seconds<=0){
+      // Time expired - auto submit
+      saveCurrent().then(()=>{
+        fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{
+          if(r.redirect_url){
+            alert('Time has expired! Your quiz has been automatically submitted.');
+            window.location=r.redirect_url;
+          }
+        });
+      });
+    }
+    if(s.completed){
+      nextBtn.disabled=prevBtn.disabled=true;
+      finalizeBtn.disabled=true;
+      clearBtn.disabled=true;
+    }
+  }
+  
+  function displayTimer(){
+    const m=Math.floor(remainingSeconds/60);
+    const sec=remainingSeconds%60;
+    timerEl.textContent=m+':'+(sec<10?'0':'')+sec;
+    if(remainingSeconds<=60){
+      timerEl.parentElement.classList.add('timer-warning');
+    }else{
+      timerEl.parentElement.classList.remove('timer-warning');
+    }
   }  
   
   // Anti-cheating functions
   function enterFullscreen(){const elem=document.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{});}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen();}else if(elem.msRequestFullscreen){elem.msRequestFullscreen();}}
-  function showFocusWarning(msg){return new Promise((resolve)=>{if(focusWarningModal){document.getElementById('focusWarningModalBody').innerHTML=msg;const btn=document.getElementById('focusWarningBtn');const handleClick=()=>{btn.removeEventListener('click',handleClick);focusWarningModal.hide();resolve();};btn.addEventListener('click',handleClick);focusWarningModal.show();}else{resolve();}});}
-  async function handleFocusLoss(reason){if(isProcessingWarning)return;const timeSinceFocus=Date.now()-lastFocusTime;if(timeSinceFocus<1000)return;isProcessingWarning=true;focusWarningCount++;if(focusWarningCount>=MAX_WARNINGS){await showFocusWarning('<strong>Final Warning #'+focusWarningCount+'</strong><br><br>You have reached the maximum number of warnings. Your quiz will be automatically submitted now.');saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{if(r.redirect_url)window.location=r.redirect_url;}));}else{const remaining=MAX_WARNINGS-focusWarningCount;await showFocusWarning('<strong>Warning #'+focusWarningCount+' of '+MAX_WARNINGS+'</strong><br><br>'+reason+'<br><br>You have <strong>'+remaining+'</strong> warning'+(remaining>1?'s':'')+' remaining.');}isProcessingWarning=false;}
+  function showFocusWarning(msg,shouldReload){return new Promise((resolve)=>{if(focusWarningModal){document.getElementById('focusWarningModalBody').innerHTML=msg;const btn=document.getElementById('focusWarningBtn');const handleClick=()=>{btn.removeEventListener('click',handleClick);focusWarningModal.hide();if(shouldReload){window.location.reload();}else{resolve();}};btn.addEventListener('click',handleClick);focusWarningModal.show();}else{resolve();}});}
+  async function handleFocusLoss(reason){if(isProcessingWarning)return;const timeSinceFocus=Date.now()-lastFocusTime;if(timeSinceFocus<1000)return;isProcessingWarning=true;focusWarningCount++;sessionStorage.setItem(warningKey,focusWarningCount.toString());if(focusWarningCount>=MAX_WARNINGS){await showFocusWarning('<strong>Final Warning #'+focusWarningCount+'</strong><br><br>You have reached the maximum number of warnings. Your quiz will be automatically submitted now.',false);saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{sessionStorage.removeItem(warningKey);if(r.redirect_url)window.location=r.redirect_url;}));}else{const remaining=MAX_WARNINGS-focusWarningCount;await showFocusWarning('<strong>Warning #'+focusWarningCount+' of '+MAX_WARNINGS+'</strong><br><br>'+reason+'<br><br>You have <strong>'+remaining+'</strong> warning'+(remaining>1?'s':'')+' remaining.',true);}isProcessingWarning=false;}
   
   // Event listeners
   nextBtn.addEventListener('click',()=>{if(currentIndex<questionOrder.length-1){saveCurrent().then(()=>loadQuestion(currentIndex+1));}});
