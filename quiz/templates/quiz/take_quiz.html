@@ -363,6 +363,9 @@
                                     ← Previous
                                 </button>
                                 <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-warning btn-reset-answer" data-question-id="{{ question.id }}">
+                                        🗑️ Clear Answer
+                                    </button>
                                     <button type="button" class="btn btn-primary nav-next-btn">
                                         Next →
                                     </button>
@@ -493,6 +496,109 @@ function getCookie(name) {
 }
 const csrftoken = getCookie('csrftoken');
 
+// Auto-save functionality
+const saveProgressUrl = "{% url 'save_quiz_progress' attempt.id %}";
+let saveTimeout;
+
+function saveQuestionProgress(questionElement) {
+    const questionInput = questionElement.querySelector('input[name^="question_"], textarea[name^="question_"]');
+    if (!questionInput) return;
+    
+    const questionId = questionInput.name.match(/question_(\d+)/)?.[1];
+    if (!questionId) return;
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    formData.append('question_id', questionId);
+
+    // Get the question type and collect answer data
+    const radioButtons = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="radio"]`);
+    const checkboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="checkbox"]`);
+    const textarea = questionElement.querySelector(`textarea[name="question_${questionId}"]`);
+
+    let selectedOptions = [];
+
+    if (radioButtons.length > 0) {
+        // Radio button (single choice)
+        const selectedRadio = questionElement.querySelector(`input[name="question_${questionId}"]:checked`);
+        if (selectedRadio) {
+            formData.append('option_ids', selectedRadio.value);
+            selectedOptions.push(selectedRadio.value);
+        }
+    } else if (checkboxes.length > 0) {
+        // Checkboxes (multiple choice)
+        const selectedCheckboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"]:checked`);
+        selectedCheckboxes.forEach(checkbox => {
+            formData.append('option_ids', checkbox.value);
+            selectedOptions.push(checkbox.value);
+        });
+        console.log(`Multiple choice question ${questionId}: selected options`, selectedOptions);
+    } else if (textarea) {
+        // Text area (short answer)
+        formData.append('text_answer', textarea.value);
+    }
+
+    // Debug: Log what we're sending
+    console.log(`Saving question ${questionId}, selected options:`, selectedOptions);
+
+    // Send AJAX request to save progress
+    fetch(saveProgressUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Progress saved for question', questionId, 'with options:', selectedOptions);
+        } else if (data.expired) {
+            showAlert('Time expired! Your quiz will be auto-submitted.', 'danger', 'Time Expired').then(() => {
+                document.getElementById('quizForm').submit();
+            });
+        } else {
+            console.error('Failed to save progress:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving progress:', error);
+    });
+}
+
+function debouncedSave(questionElement) {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveQuestionProgress(questionElement);
+    }, 500); // Save after 500ms of inactivity
+}
+
+function saveAllCurrentAnswers() {
+    return new Promise((resolve) => {
+        const questions = document.querySelectorAll('.question-container');
+        let pendingSaves = 0;
+        let completedSaves = 0;
+
+        questions.forEach(questionElement => {
+            if (hasQuestionAnswer(questionElement)) {
+                pendingSaves++;
+                saveQuestionProgress(questionElement);
+                // Since saveQuestionProgress is async, we'll wait a bit
+                setTimeout(() => {
+                    completedSaves++;
+                    if (completedSaves >= pendingSaves) {
+                        resolve();
+                    }
+                }, 100);
+            }
+        });
+
+        if (pendingSaves === 0) {
+            resolve();
+        }
+    });
+}
+
 // Timer - Backend Managed
 let timeLeft = {{ time_remaining_seconds }};
 const timerEl = document.getElementById('timeLeft');
@@ -507,11 +613,13 @@ function syncTimeWithBackend() {
         .then(data => {
             if (data.expired || data.completed) {
                 showAlert(
-                    'Time is up! Your quiz will be submitted automatically.',
+                    'Time is up! Saving your current answers and submitting automatically.',
                     'danger',
                     'Time Expired'
                 ).then(() => {
-                    document.getElementById('quizForm').submit();
+                    saveAllCurrentAnswers().then(() => {
+                        document.getElementById('quizForm').submit();
+                    });
                 });
             } else {
                 timeLeft = data.time_remaining;
@@ -535,11 +643,13 @@ function updateTimer() {
     
     if (timeLeft <= 0) {
         showAlert(
-            'Time is up! Your quiz will be submitted automatically.',
+            'Time is up! Saving your current answers and submitting automatically.',
             'danger',
             'Time Expired'
         ).then(() => {
-            document.getElementById('quizForm').submit();
+            saveAllCurrentAnswers().then(() => {
+                document.getElementById('quizForm').submit();
+            });
         });
         return;
     }
@@ -552,12 +662,22 @@ updateTimer();
 
 // Handle form submission
 document.getElementById('finalSubmitBtn').addEventListener('click', async function() {
+    // Save all current answers before submitting
+    await saveAllCurrentAnswers();
+    
     const confirmed = await showConfirm(
         'Are you sure you want to submit your quiz?<br><br><strong>Important:</strong> You cannot change your answers after submission.',
         'Confirm Submission'
     );
     
     if (confirmed) {
+        // Debug: Log all form data before submission
+        const formData = new FormData(document.getElementById('quizForm'));
+        console.log('Form submission data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, ':', value);
+        }
+        
         this.disabled = true;
         this.textContent = 'Submitting...';
         document.getElementById('quizForm').submit();
@@ -642,11 +762,74 @@ function updateNavigator() {
             btn.classList.add('unanswered');
         }
     });
+    
+    console.log('Navigator updated. Answered questions:', Array.from(answeredQuestions));
 }
 
 function markAnswered(questionNum) {
     answeredQuestions.add(questionNum);
     updateNavigator();
+}
+
+function markUnanswered(questionNum) {
+    answeredQuestions.delete(questionNum);
+    updateNavigator();
+}
+
+function clearQuestionAnswer(questionId) {
+    const questionInputs = document.querySelectorAll(`[name="question_${questionId}"]`);
+    if (questionInputs.length === 0) return;
+    
+    const questionElement = questionInputs[0].closest('.question-container');
+    const questionNum = parseInt(questionElement.dataset.question);
+    
+    // Clear radio buttons
+    const radioButtons = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="radio"]`);
+    radioButtons.forEach(radio => {
+        radio.checked = false;
+        radio.closest('.option-item').classList.remove('selected');
+    });
+    
+    // Clear checkboxes
+    const checkboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="checkbox"]`);
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.closest('.option-item').classList.remove('selected');
+    });
+    
+    // Clear textarea
+    const textarea = questionElement.querySelector(`textarea[name="question_${questionId}"]`);
+    if (textarea) {
+        textarea.value = '';
+    }
+    
+    // Mark as unanswered
+    markUnanswered(questionNum);
+    
+    // Save the cleared state
+    saveQuestionProgress(questionElement);
+    
+    // Show confirmation
+    showAlert('Answer cleared successfully!', 'success', 'Cleared');
+}
+
+function hasQuestionAnswer(questionElement) {
+    const hasRadioChecked = questionElement.querySelector('input[type="radio"]:checked') !== null;
+    const hasCheckboxChecked = questionElement.querySelector('input[type="checkbox"]:checked') !== null;
+    const textarea = questionElement.querySelector('textarea[name^="question_"]');
+    const hasTextInput = textarea && textarea.value.trim() !== '';
+    
+    const result = hasRadioChecked || hasCheckboxChecked || hasTextInput;
+    
+    console.log('hasQuestionAnswer check:', {
+        questionNum: questionElement.dataset.question,
+        hasRadioChecked,
+        hasCheckboxChecked,
+        hasTextInput,
+        result
+    });
+    
+    return result;
 }
 
 // Event Listeners
@@ -659,6 +842,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize first question
     showQuestion(1);
+    
+    // Initialize all questions as unanswered first
+    answeredQuestions.clear();
+    
+    // Check existing answers and mark questions as answered only if they actually have answers
+    document.querySelectorAll('.question-container').forEach(questionElement => {
+        const questionNum = parseInt(questionElement.dataset.question);
+        if (hasQuestionAnswer(questionElement)) {
+            markAnswered(questionNum);
+            console.log('Initially marked as answered:', questionNum);
+        } else {
+            console.log('Initially unanswered:', questionNum);
+        }
+    });
+    
+    // Update visual styles for existing answers
+    updateOptionStyles();
     
     // Fullscreen button click handler
     document.getElementById('fullscreenBtn').addEventListener('click', function() {
@@ -679,6 +879,21 @@ document.addEventListener('DOMContentLoaded', function() {
             previousQuestion();
         } else if (e.target.classList.contains('nav-next-btn')) {
             nextQuestion();
+        }
+        
+        // Handle reset answer buttons
+        if (e.target.classList.contains('btn-reset-answer')) {
+            const questionId = e.target.dataset.questionId;
+            if (questionId) {
+                showConfirm(
+                    'Are you sure you want to clear your answer for this question?',
+                    'Clear Answer'
+                ).then((confirmed) => {
+                    if (confirmed) {
+                        clearQuestionAnswer(questionId);
+                    }
+                });
+            }
         }
         
         // Handle question navigator buttons
@@ -708,9 +923,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form input change listeners
     document.addEventListener('change', function(e) {
         if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
+            const questionElement = e.target.closest('.question-container');
             const questionNum = parseInt(e.target.dataset.questionNum);
-            if (questionNum) {
-                markAnswered(questionNum);
+            
+            console.log('Question changed:', questionNum, 'Element:', questionElement);
+            
+            if (questionNum && questionElement) {
+                if (hasQuestionAnswer(questionElement)) {
+                    markAnswered(questionNum);
+                    console.log('Marked as answered:', questionNum);
+                } else {
+                    markUnanswered(questionNum);
+                    console.log('Marked as unanswered:', questionNum);
+                }
+                
+                // Auto-save the answer
+                debouncedSave(questionElement);
             }
             
             // Update visual feedback
@@ -727,9 +955,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Textarea input listeners
     document.addEventListener('input', function(e) {
         if (e.target.matches('textarea[data-question-num]')) {
+            const questionElement = e.target.closest('.question-container');
             const questionNum = parseInt(e.target.dataset.questionNum);
-            if (questionNum) {
-                markAnswered(questionNum);
+            
+            console.log('Textarea changed:', questionNum, 'Element:', questionElement);
+            
+            if (questionNum && questionElement) {
+                if (hasQuestionAnswer(questionElement)) {
+                    markAnswered(questionNum);
+                    console.log('Marked as answered:', questionNum);
+                } else {
+                    markUnanswered(questionNum);
+                    console.log('Marked as unanswered:', questionNum);
+                }
+                
+                // Auto-save the answer
+                debouncedSave(questionElement);
             }
         }
     });

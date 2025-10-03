@@ -215,20 +215,26 @@ def take_quiz(request, attempt_id):
                 answer.save()
             else:
                 selected_option_ids = request.POST.getlist(f'question_{question.id}')
+                print(f"DEBUG: Form submission - Question {question.id} received option_ids: {selected_option_ids}")
+                
                 answer, created = StudentAnswer.objects.get_or_create(
                     attempt=attempt,
                     question=question
                 )
                 answer.selected_options.clear()
                 
+                valid_options = []
                 for option_id in selected_option_ids:
                     try:
                         option = AnswerOption.objects.get(id=option_id, question=question)
                         answer.selected_options.add(option)
+                        valid_options.append(option.option_text)
                     except AnswerOption.DoesNotExist:
+                        print(f"DEBUG: Form submission - Invalid option ID {option_id} for question {question.id}")
                         pass
                 
                 answer.save()
+                print(f"DEBUG: Form submission - Question {question.id} saved with options: {valid_options}")
         
         # Calculate score
         result = attempt.calculate_score()
@@ -314,20 +320,26 @@ def save_quiz_progress(request, attempt_id):
         answer.save()
     else:
         selected_option_ids = request.POST.getlist('option_ids')
+        print(f"DEBUG: Question {question_id} received option_ids: {selected_option_ids}")
+        
         answer, created = StudentAnswer.objects.get_or_create(
             attempt=attempt,
             question=question
         )
         answer.selected_options.clear()
         
+        valid_options = []
         for option_id in selected_option_ids:
             try:
                 option = AnswerOption.objects.get(id=option_id, question=question)
                 answer.selected_options.add(option)
+                valid_options.append(option.option_text)
             except AnswerOption.DoesNotExist:
+                print(f"DEBUG: Invalid option ID {option_id} for question {question_id}")
                 pass
         
         answer.save()
+        print(f"DEBUG: Question {question_id} saved with options: {valid_options}")
     
     return JsonResponse({'success': True})
 

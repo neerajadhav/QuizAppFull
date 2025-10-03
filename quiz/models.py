@@ -414,6 +414,12 @@ class QuizAttempt(models.Model):
             elif question.question_type == 'multiple':
                 selected_options = set(answer.selected_options.all())
                 correct_options = set(question.options.filter(is_correct=True))
+                
+                print(f"DEBUG: Multiple choice question {question.id}")
+                print(f"  Selected: {[opt.option_text for opt in selected_options]}")
+                print(f"  Correct: {[opt.option_text for opt in correct_options]}")
+                print(f"  Match: {selected_options == correct_options}")
+                
                 if selected_options == correct_options:
                     earned_marks += question.marks
                     is_answer_correct = True
