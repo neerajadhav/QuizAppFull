@@ -8,6 +8,9 @@ from django.db.models import Avg, Count, Q
 from .models import Quiz, QuizAttempt, StudentAnswer, Question, AnswerOption
 from .forms import StudentRegistrationForm, TeacherRegistrationForm, LoginForm
 import random
+from django.views.decorators.http import require_POST, require_GET
+from django.forms.models import model_to_dict
+from django.db import transaction
 
 
 def student_register(request):
@@ -214,7 +217,8 @@ def take_quiz(request, attempt_id):
                 answer.text_answer = text_answer
                 answer.save()
             else:
-                selected_option_ids = request.POST.getlist(f'question_{question.id}')
+                # Accept both legacy name 'question_<id>' and new 'question_<id>[]'
+                selected_option_ids = request.POST.getlist(f'question_{question.id}[]') or request.POST.getlist(f'question_{question.id}')
                 print(f"DEBUG: Form submission - Question {question.id} received option_ids: {selected_option_ids}")
                 
                 answer, created = StudentAnswer.objects.get_or_create(
@@ -250,6 +254,141 @@ def take_quiz(request, attempt_id):
         'time_remaining_seconds': int(time_remaining),
     }
     return render(request, 'quiz/take_quiz.html', context)
+
+# ================= AJAX Attempt API =================
+
+def _serialize_option(option):
+    return {
+        'id': option.id,
+        'text': option.option_text,
+    }
+
+def _serialize_question(question, include_options=True):
+    data = {
+        'id': question.id,
+        'type': question.question_type,
+        'marks': question.marks,
+        'is_required': question.is_required,
+        'html': question.question_text,  # rich text safe HTML
+    }
+    if include_options and question.question_type in ['single','multiple','true_false']:
+        opts = list(question.options.all())
+        data['options'] = [_serialize_option(o) for o in opts]
+    return data
+
+def _ensure_question_order(session, attempt, questions):
+    key = f"attempt_{attempt.id}_order"
+    if key not in session:
+        order = [q.id for q in questions]
+        session[key] = order
+        session.modified = True
+    return session[key]
+
+@login_required
+@require_GET
+def api_attempt_questions(request, attempt_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    quiz = attempt.quiz
+    base_qs = list(quiz.questions.all())
+    if quiz.randomize_questions:
+        # deterministic per session: shuffle copy only on first retrieval
+        _ensure_question_order(request.session, attempt, base_qs)
+        ordered_ids = request.session.get(f"attempt_{attempt.id}_order")
+        id_to_q = {q.id: q for q in base_qs}
+        questions = [id_to_q[i] for i in ordered_ids if i in id_to_q]
+    else:
+        questions = base_qs
+    data = [_serialize_question(q, include_options=False) for q in questions]
+    return JsonResponse({'questions': data})
+
+@login_required
+@require_GET
+def api_attempt_status(request, attempt_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    quiz = attempt.quiz
+    time_elapsed = (timezone.now() - attempt.start_time).total_seconds()
+    limit = quiz.duration_minutes * 60
+    remaining = max(0, int(limit - time_elapsed))
+    return JsonResponse({
+        'completed': attempt.is_completed,
+        'remaining_seconds': remaining,
+        'score': float(attempt.score) if attempt.score is not None else None,
+        'percentage': float(attempt.percentage) if attempt.percentage is not None else None,
+    })
+
+@login_required
+@require_GET
+def api_attempt_question(request, attempt_id, question_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    if attempt.is_completed:
+        return JsonResponse({'error': 'Attempt completed'}, status=400)
+    question = get_object_or_404(Question, id=question_id, quiz=attempt.quiz)
+    answer = StudentAnswer.objects.filter(attempt=attempt, question=question).first()
+    selected = []
+    text_answer = ''
+    if answer:
+        selected = list(answer.selected_options.values_list('id', flat=True))
+        text_answer = answer.text_answer
+    return JsonResponse({
+        'question': _serialize_question(question, include_options=True),
+        'selected_option_ids': selected,
+        'text_answer': text_answer,
+    })
+
+@login_required
+@require_POST
+def api_save_answer(request, attempt_id, question_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    if attempt.is_completed:
+        return JsonResponse({'error': 'Attempt completed'}, status=400)
+    quiz = attempt.quiz
+    # time check
+    elapsed = (timezone.now() - attempt.start_time).total_seconds()
+    if elapsed >= quiz.duration_minutes * 60:
+        attempt.calculate_score()
+        return JsonResponse({'error': 'Time expired', 'expired': True}, status=400)
+    question = get_object_or_404(Question, id=question_id, quiz=quiz)
+    answer, _ = StudentAnswer.objects.get_or_create(attempt=attempt, question=question)
+    if question.question_type == 'short_answer':
+        answer.text_answer = request.POST.get('text_answer', '')
+        answer.save()
+        return JsonResponse({'success': True})
+    # options
+    option_ids = request.POST.getlist('option_ids[]') or request.POST.getlist('option_ids')
+    # de-duplicate while preserving order
+    seen = set()
+    filtered = []
+    for oid in option_ids:
+        if oid not in seen:
+            seen.add(oid)
+            filtered.append(oid)
+    answer.selected_options.clear()
+    valid_ids = []
+    for oid in filtered:
+        try:
+            opt = AnswerOption.objects.get(id=oid, question=question)
+            answer.selected_options.add(opt)
+            valid_ids.append(opt.id)
+        except AnswerOption.DoesNotExist:
+            continue
+    answer.save()
+    return JsonResponse({'success': True, 'saved_option_ids': valid_ids})
+
+@login_required
+@require_POST
+def api_finalize_attempt(request, attempt_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    if attempt.is_completed:
+        return JsonResponse({'already_completed': True, 'score': float(attempt.score or 0), 'percentage': float(attempt.percentage or 0)})
+    result = attempt.calculate_score()
+    return JsonResponse({
+        'completed': True,
+        'score': float(result['score']),
+        'total': float(result['total']),
+        'percentage': float(result['percentage']),
+        'passed': result['passed'],
+        'redirect_url': redirect('quiz_result', attempt_id=attempt.id).url
+    })
 
 
 @login_required

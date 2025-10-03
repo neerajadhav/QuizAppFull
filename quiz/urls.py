@@ -14,5 +14,11 @@ urlpatterns = [
     path('attempt/<int:attempt_id>/check-time/', views.check_quiz_time, name='check_quiz_time'),
     path('attempt/<int:attempt_id>/save-progress/', views.save_quiz_progress, name='save_quiz_progress'),
     path('attempt/<int:attempt_id>/result/', views.quiz_result, name='quiz_result'),
+    # New AJAX API endpoints for fully backend-driven attempt flow
+    path('attempt/<int:attempt_id>/api/questions/', views.api_attempt_questions, name='api_attempt_questions'),
+    path('attempt/<int:attempt_id>/api/status/', views.api_attempt_status, name='api_attempt_status'),
+    path('attempt/<int:attempt_id>/api/question/<int:question_id>/', views.api_attempt_question, name='api_attempt_question'),
+    path('attempt/<int:attempt_id>/api/question/<int:question_id>/answer/', views.api_save_answer, name='api_save_answer'),
+    path('attempt/<int:attempt_id>/api/finalize/', views.api_finalize_attempt, name='api_finalize_attempt'),
     path('<int:quiz_id>/analytics/', views.quiz_analytics, name='quiz_analytics'),
 ]

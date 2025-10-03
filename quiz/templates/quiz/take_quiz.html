@@ -1,1184 +1,259 @@
 {% extends "base.html" %}
-
-{% block extra_css %}
-<style>
-    .quiz-header {
-        background-color: #212529;
-        color: #fff;
-        padding: 15px 20px;
-        border-bottom: 3px solid #0d6efd;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-    }
-    
-    .timer-display {
-        background-color: #495057;
-        padding: 8px 15px;
-        border: 2px solid #0d6efd;
-        font-size: 18px;
-        font-weight: bold;
-        min-width: 120px;
-        text-align: center;
-        border-radius: 0.375rem;
-    }
-    
-    .timer-display.warning {
-        background-color: #dc3545;
-        border-color: #b02a37;
-        animation: pulse 1s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-    }
-    
-    .question-nav-btn {
-        padding: 8px;
-        border: 1px solid #dee2e6;
-        background-color: #fff;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: bold;
-        text-align: center;
-        transition: all 0.2s;
-        border-radius: 0.375rem;
-    }
-    
-    .question-nav-btn:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .question-nav-btn.current {
-        background-color: #0d6efd;
-        color: #fff;
-        border-color: #0a58ca;
-    }
-    
-    .question-nav-btn.answered {
-        background-color: #198754;
-        color: #fff;
-        border-color: #146c43;
-    }
-    
-    .question-nav-btn.unanswered {
-        background-color: #fff;
-        color: #6c757d;
-    }
-    
-    .option-item {
-        background-color: #fff;
-        border: 2px solid #dee2e6;
-        padding: 15px;
-        margin: 10px 0;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        user-select: none;
-        border-radius: 0.375rem;
-    }
-    
-    .option-item:hover {
-        background-color: #f8f9fa;
-        border-color: #0d6efd;
-        transform: translateX(5px);
-    }
-    
-    .option-item.selected {
-        background-color: #e7f1ff;
-        border-color: #0d6efd;
-        border-width: 2px;
-    }
-    
-    .option-item input[type="radio"],
-    .option-item input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-    
-    .option-item input[type="radio"]:checked ~ label,
-    .option-item input[type="checkbox"]:checked ~ label {
-        font-weight: bold;
-        color: #212529;
-    }
-    
-    .option-item input[type="radio"]:checked,
-    .option-item input[type="checkbox"]:checked {
-        accent-color: #0d6efd;
-    }
-    
-    .option-item label {
-        cursor: pointer;
-        flex: 1;
-        margin: 0;
-        font-size: 15px;
-        line-height: 1.6;
-    }
-    
-        .answer-textarea {
-        width: 100%;
-        padding: 15px;
-        border: 2px solid #dee2e6;
-        font-size: 15px;
-        font-family: inherit;
-        min-height: 120px;
-        resize: vertical;
-    }
-    
-    /* Question container visibility */
-    .question-container {
-        display: none;
-    }
-    
-    .question-container.active {
-        display: block;
-    }
-    
-    #submitSection {
-        display: none;
-    }
-    
-    #submitSection.active {
-        display: block;
-    }
-    
-    .answer-textarea:focus {
-        border-color: #0d6efd;
-        outline: none;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<!-- Alert Modal -->
-<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header" id="alertModalHeader">
-                <h5 class="modal-title" id="alertModalLabel">Alert</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="alertModalBody">
-                Alert message
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="alertModalBtn" data-bs-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+  #questionNav .question-btn {
+    min-width: 50px;
+    height: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 2px solid;
+  }
+  #questionNav .question-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  #questionNav .btn-answered {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+  }
+  #questionNav .btn-answered:hover {
+    background-color: #157347;
+    border-color: #146c43;
+  }
+  #questionNav .btn-current {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25);
+  }
+  #questionNav .btn-unanswered {
+    background-color: white;
+    border-color: #6c757d;
+    color: #6c757d;
+  }
+  #questionNav .btn-unanswered:hover {
+    background-color: #e9ecef;
+  }
+  .timer-warning{animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  .question-card{box-shadow:0 0.125rem 0.25rem rgba(0,0,0,0.075);transition:box-shadow 0.2s;}
+  .question-card:hover{box-shadow:0 0.5rem 1rem rgba(0,0,0,0.15);}
+  .nav-card{position:sticky;top:20px;}
+  .form-check-input:checked ~ .form-check-label{font-weight:500;color:#0d6efd;}
+  #quizApp{min-height:80vh;}
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.875rem;
+  }
+  .legend-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid;
+  }
+</style>
 
-<!-- Confirm Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="confirmModalLabel">Confirm Submission</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="confirmModalBody">
-                Are you sure you want to submit?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmSubmitBtn">Submit</button>
-            </div>
-        </div>
+<!-- Fullscreen Modal -->
+<div class="modal fade" id="fullscreenModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-fullscreen"></i> Fullscreen Required</h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">For a fair exam environment, this quiz must be taken in fullscreen mode.</p>
+        <ul class="mb-0">
+          <li>You cannot exit fullscreen during the quiz</li>
+          <li>Switching tabs or windows will trigger warnings</li>
+          <li>After 3 warnings, your quiz will be auto-submitted</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="fullscreenBtn">Enter Fullscreen</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Focus Warning Modal -->
-<div class="modal fade" id="focusWarningModal" tabindex="-1" aria-labelledby="focusWarningModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="focusWarningModalLabel">Focus Warning</h5>
-            </div>
-            <div class="modal-body" id="focusWarningModalBody">
-                Warning message
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="focusWarningBtn">Continue Quiz</button>
-            </div>
-        </div>
+<div class="modal fade" id="focusWarningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-warning">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Warning</h5>
+      </div>
+      <div class="modal-body" id="focusWarningModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" id="focusWarningBtn">I Understand</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Fullscreen Prompt Modal -->
-<div class="modal fade" id="fullscreenModal" tabindex="-1" aria-labelledby="fullscreenModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <h5 class="modal-title" id="fullscreenModalLabel">Fullscreen Mode</h5>
-            </div>
-            <div class="modal-body">
-                For the best quiz experience, please click OK to enter fullscreen mode. This helps minimize distractions.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="fullscreenBtn">Enter Fullscreen</button>
-            </div>
+<div class="container-fluid my-4" id="quizApp" data-attempt="{{ attempt.id }}">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="card nav-card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-list-ol"></i> Questions</span>
+          <span class="badge bg-light text-dark" id="timer">--:--</span>
         </div>
+        <div class="card-body">
+          <div class="row row-cols-4 g-3" id="questionNav"></div>
+          <div class="mt-4 pt-3 border-top">
+            <div class="d-flex flex-column gap-2">
+              <div class="legend-item">
+                <div class="legend-box" style="background-color: #0d6efd; border-color: #0d6efd;"></div>
+                <span>Current</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-box" style="background-color: #198754; border-color: #198754;"></div>
+                <span>Answered</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-box" style="background-color: white; border-color: #6c757d;"></div>
+                <span>Not Answered</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
-
-<!-- Quiz Header -->
-<div class="quiz-header">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <div class="quiz-header-title">
-                <h1 class="h4 mb-0 text-white">{{ quiz.title }}</h1>
-            </div>
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="d-flex align-items-center gap-2 text-light">
-                    <strong class="text-info">Questions:</strong> <span>{{ questions|length }}</span>
-                </div>
-                <div class="d-flex align-items-center gap-2 text-light">
-                    <strong class="text-info">Marks:</strong> <span>{{ quiz.get_total_marks }}</span>
-                </div>
-                <div class="timer-display" id="timer">
-                    <span id="timeLeft">Loading...</span>
-                </div>
-            </div>
+    <div class="col-lg-9">
+      <div id="questionPanel" class="mb-3"></div>
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+        <button class="btn btn-outline-secondary" id="prevBtn" disabled>
+          <i class="bi bi-arrow-left"></i> Previous
+        </button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-warning" id="clearBtn" disabled>
+            <i class="bi bi-x-circle"></i> Clear
+          </button>
+          <button class="btn btn-primary" id="nextBtn" disabled>
+            Next <i class="bi bi-arrow-right"></i>
+          </button>
+          <button class="btn btn-success d-none" id="finalizeBtn">
+            <i class="bi bi-check-circle"></i> Submit Quiz
+          </button>
         </div>
+      </div>
     </div>
+  </div>
 </div>
-
-<!-- Main Quiz Container -->
-<div class="container-fluid my-4">
-    <div class="row g-4">
-        <!-- Question Navigator Sidebar -->
-        <div class="col-xl-3 col-lg-4">
-            <div class="position-sticky" style="top: 100px;">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="mb-0">Question Navigator</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 mb-3" id="questionNavGrid">
-                            {% for question in questions %}
-                            <div class="col-3">
-                                <button type="button" class="question-nav-btn w-100" data-question="{{ forloop.counter }}" data-action="goToQuestion">
-                                    {{ forloop.counter }}
-                                </button>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <div class="border-top pt-3">
-                            <small class="text-muted">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <div class="bg-primary" style="width: 20px; height: 20px; border-radius: 0.375rem;"></div>
-                                    <span>Current</span>
-                                </div>
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <div class="bg-success" style="width: 20px; height: 20px; border-radius: 0.375rem;"></div>
-                                    <span>Answered</span>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-light border" style="width: 20px; height: 20px; border-radius: 0.375rem;"></div>
-                                    <span>Not Answered</span>
-                                </div>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Questions Area -->
-        <div class="col-xl-9 col-lg-8">
-            <form method="post" id="quizForm">
-                {% csrf_token %}
-                
-                {% for question in questions %}
-                <div class="question-container" data-question="{{ forloop.counter }}">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom border-primary">
-                                <div>
-                                    <h3 class="fw-bold mb-1">
-                                        Question {{ forloop.counter }}
-                                        {% if question.is_required %}
-                                        <span class="text-danger small">* Required</span>
-                                        {% endif %}
-                                    </h3>
-                                </div>
-                                <span class="badge bg-primary">{{ question.marks }} marks</span>
-                            </div>
-                            
-                            <div class="alert alert-light border-start border-primary border-3 mb-4">
-                                {{ question.question_text|safe }}
-                            </div>
-                            
-                            {% if question.question_type == 'single' or question.question_type == 'true_false' %}
-                                <div class="alert alert-info py-2 mb-3">
-                                    <small><em>Select one answer</em></small>
-                                </div>
-                                <div class="options-container">
-                                    {% for option in question.options.all %}
-                                    <div class="option-item">
-                                        <input type="radio" name="question_{{ question.id }}" 
-                                               id="opt_{{ option.id }}" value="{{ option.id }}"
-                                               {% if question.is_required %}required{% endif %}
-                                               data-question-num="{{ forloop.parentloop.counter }}">
-                                        <label for="opt_{{ option.id }}">{{ option.option_text }}</label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            
-                            {% elif question.question_type == 'multiple' %}
-                                <div class="alert alert-info py-2 mb-3">
-                                    <small><em>Select all that apply</em></small>
-                                </div>
-                                <div class="options-container">
-                                    {% for option in question.options.all %}
-                                    <div class="option-item">
-                                        <input type="checkbox" name="question_{{ question.id }}" 
-                                               id="opt_{{ option.id }}" value="{{ option.id }}"
-                                               data-question-num="{{ forloop.parentloop.counter }}">
-                                        <label for="opt_{{ option.id }}">{{ option.option_text }}</label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            
-                            {% elif question.question_type == 'short_answer' %}
-                                <div class="alert alert-info py-2 mb-3">
-                                    <small><em>Type your answer below</em></small>
-                                </div>
-                                <div class="options-container">
-                                    <textarea name="question_{{ question.id }}" class="answer-textarea form-control"
-                                              placeholder="Enter your answer here..."
-                                              {% if question.is_required %}required{% endif %}
-                                              data-question-num="{{ forloop.counter }}"></textarea>
-                                </div>
-                            {% endif %}
-                            
-                            <div class="d-flex justify-content-between gap-3 mt-4 pt-3 border-top">
-                                <button type="button" class="btn btn-outline-secondary nav-prev-btn">
-                                    ← Previous
-                                </button>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-warning btn-reset-answer" data-question-id="{{ question.id }}">
-                                        🗑️ Clear Answer
-                                    </button>
-                                    <button type="button" class="btn btn-primary nav-next-btn">
-                                        Next →
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                
-                <!-- Submit Section -->
-                <div class="submit-section" id="submitSection">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <div class="alert alert-light mb-4">
-                                <h2 class="alert-heading">Review Your Answers</h2>
-                                <div class="row text-center my-4">
-                                    <div class="col-md-4">
-                                        <h3 class="text-primary" id="totalQuestions">{{ questions|length }}</h3>
-                                        <small class="text-muted">Total Questions</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <h3 class="text-success" id="answeredTotal">0</h3>
-                                        <small class="text-muted">Answered</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <h3 class="text-warning" id="unansweredTotal">{{ questions|length }}</h3>
-                                        <small class="text-muted">Not Answered</small>
-                                    </div>
-                                </div>
-                                <p class="text-muted mb-0">
-                                    Please review your answers before submitting. You can navigate back to any question using the question navigator.
-                                </p>
-                            </div>
-                            <button type="button" class="btn btn-success btn-lg mb-3" id="finalSubmitBtn">
-                                Submit Quiz
-                            </button>
-                            <br>
-                            <button type="button" class="btn btn-outline-secondary" data-action="goToQuestion" data-question="{{ questions|length }}">
-                                ← Back to Questions
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
-let currentQuestionNum = 1;
-const totalQuestions = {{ questions|length }};
-const answeredQuestions = new Set();
+(function(){
+  const endpoints={
+    questions:"{% url 'api_attempt_questions' attempt.id %}",
+    status:"{% url 'api_attempt_status' attempt.id %}",
+    question:(qid)=>"{% url 'api_attempt_question' attempt.id 0 %}".replace('/0/','/'+qid+'/'),
+    answer:(qid)=>"{% url 'api_save_answer' attempt.id 0 %}".replace('/0/','/'+qid+'/'),
+    finalize:"{% url 'api_finalize_attempt' attempt.id %}"
+  };
+  let questionOrder=[];let currentIndex=0;const answers={};
+  const navEl=document.getElementById('questionNav');
+  const panel=document.getElementById('questionPanel');
+  const prevBtn=document.getElementById('prevBtn');
+  const nextBtn=document.getElementById('nextBtn');
+  const clearBtn=document.getElementById('clearBtn');
+  const finalizeBtn=document.getElementById('finalizeBtn');
+  const timerEl=document.getElementById('timer');
+  let focusWarningCount=0;const MAX_WARNINGS=3;let isProcessingWarning=false;let lastFocusTime=Date.now();
+  let fullscreenModal,focusWarningModal;
 
-// Bootstrap Modal instances
-let alertModal, confirmModal, focusWarningModal, fullscreenModal;
-
-// Modal Functions
-function showAlert(message, type = 'info', title = 'Notice') {
-    document.getElementById('alertModalLabel').textContent = title;
-    document.getElementById('alertModalBody').innerHTML = message;
-    
-    const icon = type === 'warning' ? '⚠️' : type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
-    document.getElementById('alertModalLabel').innerHTML = `${icon} ${title}`;
-    
-    alertModal.show();
-    
-    return new Promise((resolve) => {
-        document.getElementById('alertModalBtn').onclick = function() {
-            alertModal.hide();
-            resolve(true);
-        };
+  function fetchJSON(u,o){return fetch(u,o).then(r=>{if(!r.ok)throw r;return r.json();});}
+  function csrf(){const n='csrftoken';return document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||'';}
+  function updateNav(){
+    Array.from(navEl.children).forEach((b,i)=>{
+      const qid=questionOrder[i].id;
+      const has=answers[qid]&&((answers[qid].options||[]).length||(answers[qid].text||'').trim().length);
+      
+      // Remove all state classes
+      b.classList.remove('btn-current','btn-answered','btn-unanswered');
+      
+      // Add appropriate state class
+      if(i===currentIndex){
+        b.classList.add('btn-current');
+      }else if(has){
+        b.classList.add('btn-answered');
+      }else{
+        b.classList.add('btn-unanswered');
+      }
     });
-}
-
-function showConfirm(message, title = 'Confirm') {
-    document.getElementById('confirmModalLabel').textContent = title;
-    document.getElementById('confirmModalBody').innerHTML = message;
-    
-    confirmModal.show();
-    
-    return new Promise((resolve) => {
-        const handleCancel = () => {
-            confirmModal.hide();
-            resolve(false);
-        };
-        
-        const handleConfirm = () => {
-            confirmModal.hide();
-            resolve(true);
-        };
-        
-        // Remove any existing event listeners
-        const cancelBtn = document.querySelector('#confirmModal .btn-secondary');
-        const confirmBtn = document.getElementById('confirmSubmitBtn');
-        
-        cancelBtn.onclick = handleCancel;
-        confirmBtn.onclick = handleConfirm;
-        
-        // Also handle modal close events
-        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
+    prevBtn.disabled=currentIndex===0;
+    nextBtn.disabled=!questionOrder.length;
+    clearBtn.disabled=!questionOrder.length;
+    finalizeBtn.classList.toggle('d-none',currentIndex<questionOrder.length-1);
+  }  
+  function renderQuestion(q){let html='<div class="card question-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="mb-0">Question '+(currentIndex+1)+'</h5><span class="badge bg-info">'+q.marks+' marks</span></div><div class="mb-4">'+q.html+'</div>';if(['single','multiple','true_false'].includes(q.type)){const sel=(answers[q.id]?.options)||[];q.options.forEach(opt=>{const t=q.type==='multiple'?'checkbox':'radio';const chk=sel.includes(opt.id)?'checked':'';html+='<div class="form-check mb-3 p-3 border rounded"><input class="form-check-input answer-opt me-2" data-q="'+q.id+'" type="'+t+'" value="'+opt.id+'" id="opt'+opt.id+'" '+chk+' name="q_'+q.id+(t==='checkbox'?'[]':'')+'"><label class="form-check-label w-100" for="opt'+opt.id+'">'+opt.text+'</label></div>';});}else if(q.type==='short_answer'){const txt=answers[q.id]?.text||'';html+='<textarea class="form-control answer-text" data-q="'+q.id+'" rows="5" placeholder="Type your answer here...">'+txt+'</textarea>';}html+='</div></div>';panel.innerHTML=html;}
+  function loadQuestion(i){currentIndex=i;const qid=questionOrder[i].id;fetchJSON(endpoints.question(qid)).then(d=>{if(!(qid in answers))answers[qid]={options:d.selected_option_ids,text:d.text_answer};renderQuestion(d.question);updateNav();});}
+  function saveCurrent(){const q=questionOrder[currentIndex];if(!q)return Promise.resolve();const fd=new FormData();if(['single','multiple','true_false'].includes(q.type)){const inputs=panel.querySelectorAll('.answer-opt');const sel=[];inputs.forEach(inp=>{if(inp.checked)sel.push(inp.value);});answers[q.id].options=sel.map(x=>parseInt(x));sel.forEach(v=>fd.append('option_ids[]',v));}else if(q.type==='short_answer'){const ta=panel.querySelector('.answer-text');answers[q.id].text=ta.value;fd.append('text_answer',ta.value);}return fetchJSON(endpoints.answer(q.id),{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd}).catch(()=>{});}  
+  function init(){
+    fetchJSON(endpoints.questions).then(d=>{
+      questionOrder=d.questions;
+      navEl.innerHTML='';
+      questionOrder.forEach((q,i)=>{
+        answers[q.id]={options:[],text:''};
+        const col=document.createElement('div');
+        col.className='col';
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='btn question-btn btn-unanswered w-100';
+        btn.textContent=i+1;
+        btn.addEventListener('click',()=>{saveCurrent().then(()=>loadQuestion(i));});
+        col.appendChild(btn);
+        navEl.appendChild(col);
+      });
+      if(questionOrder.length)loadQuestion(0);
     });
-}
-
-function showFullscreenPrompt() {
-    fullscreenModal.show();
-    
-    document.getElementById('fullscreenBtn').onclick = function() {
-        fullscreenModal.hide();
-        enterFullscreen();
-    };
-}
-
-// Get CSRF token for AJAX requests
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+    setInterval(()=>{
+      fetchJSON(endpoints.status).then(s=>{
+        const m=Math.floor(s.remaining_seconds/60);
+        const sec=s.remaining_seconds%60;
+        timerEl.textContent=m+':'+(sec<10?'0':'')+sec;
+        if(s.remaining_seconds<=60){
+          timerEl.parentElement.classList.add('timer-warning');
         }
-    }
-    return cookieValue;
-}
-const csrftoken = getCookie('csrftoken');
-
-// Auto-save functionality
-const saveProgressUrl = "{% url 'save_quiz_progress' attempt.id %}";
-let saveTimeout;
-
-function saveQuestionProgress(questionElement) {
-    const questionInput = questionElement.querySelector('input[name^="question_"], textarea[name^="question_"]');
-    if (!questionInput) return;
-    
-    const questionId = questionInput.name.match(/question_(\d+)/)?.[1];
-    if (!questionId) return;
-
-    const formData = new FormData();
-    formData.append('csrfmiddlewaretoken', csrftoken);
-    formData.append('question_id', questionId);
-
-    // Get the question type and collect answer data
-    const radioButtons = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="radio"]`);
-    const checkboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="checkbox"]`);
-    const textarea = questionElement.querySelector(`textarea[name="question_${questionId}"]`);
-
-    let selectedOptions = [];
-
-    if (radioButtons.length > 0) {
-        // Radio button (single choice)
-        const selectedRadio = questionElement.querySelector(`input[name="question_${questionId}"]:checked`);
-        if (selectedRadio) {
-            formData.append('option_ids', selectedRadio.value);
-            selectedOptions.push(selectedRadio.value);
+        if(s.completed){
+          nextBtn.disabled=prevBtn.disabled=true;
+          finalizeBtn.disabled=true;
         }
-    } else if (checkboxes.length > 0) {
-        // Checkboxes (multiple choice)
-        const selectedCheckboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"]:checked`);
-        selectedCheckboxes.forEach(checkbox => {
-            formData.append('option_ids', checkbox.value);
-            selectedOptions.push(checkbox.value);
-        });
-        console.log(`Multiple choice question ${questionId}: selected options`, selectedOptions);
-    } else if (textarea) {
-        // Text area (short answer)
-        formData.append('text_answer', textarea.value);
-    }
-
-    // Debug: Log what we're sending
-    console.log(`Saving question ${questionId}, selected options:`, selectedOptions);
-
-    // Send AJAX request to save progress
-    fetch(saveProgressUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': csrftoken
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Progress saved for question', questionId, 'with options:', selectedOptions);
-        } else if (data.expired) {
-            showAlert('Time expired! Your quiz will be auto-submitted.', 'danger', 'Time Expired').then(() => {
-                document.getElementById('quizForm').submit();
-            });
-        } else {
-            console.error('Failed to save progress:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error saving progress:', error);
-    });
-}
-
-function debouncedSave(questionElement) {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-        saveQuestionProgress(questionElement);
-    }, 500); // Save after 500ms of inactivity
-}
-
-function saveAllCurrentAnswers() {
-    return new Promise((resolve) => {
-        const questions = document.querySelectorAll('.question-container');
-        let pendingSaves = 0;
-        let completedSaves = 0;
-
-        questions.forEach(questionElement => {
-            if (hasQuestionAnswer(questionElement)) {
-                pendingSaves++;
-                saveQuestionProgress(questionElement);
-                // Since saveQuestionProgress is async, we'll wait a bit
-                setTimeout(() => {
-                    completedSaves++;
-                    if (completedSaves >= pendingSaves) {
-                        resolve();
-                    }
-                }, 100);
-            }
-        });
-
-        if (pendingSaves === 0) {
-            resolve();
-        }
-    });
-}
-
-// Timer - Backend Managed
-let timeLeft = {{ time_remaining_seconds }};
-const timerEl = document.getElementById('timeLeft');
-const timerDisplay = document.getElementById('timer');
-const attemptId = {{ attempt.id }};
-const checkTimeUrl = "{% url 'check_quiz_time' attempt.id %}";
-
-// Sync with backend every 10 seconds
-function syncTimeWithBackend() {
-    fetch(checkTimeUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.expired || data.completed) {
-                showAlert(
-                    'Time is up! Saving your current answers and submitting automatically.',
-                    'danger',
-                    'Time Expired'
-                ).then(() => {
-                    saveAllCurrentAnswers().then(() => {
-                        document.getElementById('quizForm').submit();
-                    });
-                });
-            } else {
-                timeLeft = data.time_remaining;
-            }
-        })
-        .catch(error => {
-            console.error('Error syncing time with backend:', error);
-        });
-}
-
-setInterval(syncTimeWithBackend, 10000);
-
-function updateTimer() {
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
-    timerEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-    
-    if (timeLeft <= 60) {
-        timerDisplay.classList.add('warning');
-    }
-    
-    if (timeLeft <= 0) {
-        showAlert(
-            'Time is up! Saving your current answers and submitting automatically.',
-            'danger',
-            'Time Expired'
-        ).then(() => {
-            saveAllCurrentAnswers().then(() => {
-                document.getElementById('quizForm').submit();
-            });
-        });
-        return;
-    }
-    
-    timeLeft--;
-}
-
-setInterval(updateTimer, 1000);
-updateTimer();
-
-// Handle form submission
-document.getElementById('finalSubmitBtn').addEventListener('click', async function() {
-    // Save all current answers before submitting
-    await saveAllCurrentAnswers();
-    
-    const confirmed = await showConfirm(
-        'Are you sure you want to submit your quiz?<br><br><strong>Important:</strong> You cannot change your answers after submission.',
-        'Confirm Submission'
-    );
-    
-    if (confirmed) {
-        // Debug: Log all form data before submission
-        const formData = new FormData(document.getElementById('quizForm'));
-        console.log('Form submission data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(key, ':', value);
-        }
-        
-        this.disabled = true;
-        this.textContent = 'Submitting...';
-        document.getElementById('quizForm').submit();
-    }
-});
-
-// Question Navigation
-function showQuestion(questionNum) {
-    // Hide all questions and submit section
-    document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
-    document.getElementById('submitSection').classList.remove('active');
-    
-    const questionToShow = document.querySelector(`.question-container[data-question="${questionNum}"]`);
-    if (questionToShow) {
-        questionToShow.classList.add('active');
-        currentQuestionNum = questionNum;
-        updateNavButtons();
-        updateNavigator();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
-
-function goToQuestion(questionNum) {
-    if (questionNum >= 1 && questionNum <= totalQuestions) {
-        showQuestion(questionNum);
-    } else if (questionNum > totalQuestions) {
-        showSubmitSection();
-    }
-}
-
-function nextQuestion() {
-    if (currentQuestionNum < totalQuestions) {
-        goToQuestion(currentQuestionNum + 1);
-    } else {
-        showSubmitSection();
-    }
-}
-
-function previousQuestion() {
-    if (currentQuestionNum > 1) {
-        goToQuestion(currentQuestionNum - 1);
-    }
-}
-
-function showSubmitSection() {
-    document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
-    document.getElementById('submitSection').classList.add('active');
-    
-    document.getElementById('answeredTotal').textContent = answeredQuestions.size;
-    document.getElementById('unansweredTotal').textContent = totalQuestions - answeredQuestions.size;
-    
-    document.querySelectorAll('.question-nav-btn').forEach(btn => btn.classList.remove('current'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function updateNavButtons() {
-    const activeQuestion = document.querySelector('.question-container.active');
-    if (!activeQuestion) return;
-    
-    const prevBtn = activeQuestion.querySelector('.nav-prev-btn');
-    const nextBtn = activeQuestion.querySelector('.nav-next-btn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = currentQuestionNum === 1;
-    }
-    
-    if (nextBtn) {
-        nextBtn.textContent = currentQuestionNum === totalQuestions ? 'Review & Submit →' : 'Next →';
-    }
-}
-
-function updateNavigator() {
-    document.querySelectorAll('.question-nav-btn').forEach(btn => {
-        const qNum = parseInt(btn.dataset.question);
-        btn.classList.remove('current', 'answered', 'unanswered');
-        
-        if (qNum === currentQuestionNum) {
-            btn.classList.add('current');
-        } else if (answeredQuestions.has(qNum)) {
-            btn.classList.add('answered');
-        } else {
-            btn.classList.add('unanswered');
-        }
-    });
-    
-    console.log('Navigator updated. Answered questions:', Array.from(answeredQuestions));
-}
-
-function markAnswered(questionNum) {
-    answeredQuestions.add(questionNum);
-    updateNavigator();
-}
-
-function markUnanswered(questionNum) {
-    answeredQuestions.delete(questionNum);
-    updateNavigator();
-}
-
-function clearQuestionAnswer(questionId) {
-    const questionInputs = document.querySelectorAll(`[name="question_${questionId}"]`);
-    if (questionInputs.length === 0) return;
-    
-    const questionElement = questionInputs[0].closest('.question-container');
-    const questionNum = parseInt(questionElement.dataset.question);
-    
-    // Clear radio buttons
-    const radioButtons = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="radio"]`);
-    radioButtons.forEach(radio => {
-        radio.checked = false;
-        radio.closest('.option-item').classList.remove('selected');
-    });
-    
-    // Clear checkboxes
-    const checkboxes = questionElement.querySelectorAll(`input[name="question_${questionId}"][type="checkbox"]`);
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = false;
-        checkbox.closest('.option-item').classList.remove('selected');
-    });
-    
-    // Clear textarea
-    const textarea = questionElement.querySelector(`textarea[name="question_${questionId}"]`);
-    if (textarea) {
-        textarea.value = '';
-    }
-    
-    // Mark as unanswered
-    markUnanswered(questionNum);
-    
-    // Save the cleared state
-    saveQuestionProgress(questionElement);
-    
-    // Show confirmation
-    showAlert('Answer cleared successfully!', 'success', 'Cleared');
-}
-
-function hasQuestionAnswer(questionElement) {
-    const hasRadioChecked = questionElement.querySelector('input[type="radio"]:checked') !== null;
-    const hasCheckboxChecked = questionElement.querySelector('input[type="checkbox"]:checked') !== null;
-    const textarea = questionElement.querySelector('textarea[name^="question_"]');
-    const hasTextInput = textarea && textarea.value.trim() !== '';
-    
-    const result = hasRadioChecked || hasCheckboxChecked || hasTextInput;
-    
-    console.log('hasQuestionAnswer check:', {
-        questionNum: questionElement.dataset.question,
-        hasRadioChecked,
-        hasCheckboxChecked,
-        hasTextInput,
-        result
-    });
-    
-    return result;
-}
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize modals
-    alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
-    confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-    focusWarningModal = new bootstrap.Modal(document.getElementById('focusWarningModal'));
-    fullscreenModal = new bootstrap.Modal(document.getElementById('fullscreenModal'));
-    
-    // Initialize first question
-    showQuestion(1);
-    
-    // Initialize all questions as unanswered first
-    answeredQuestions.clear();
-    
-    // Check existing answers and mark questions as answered only if they actually have answers
-    document.querySelectorAll('.question-container').forEach(questionElement => {
-        const questionNum = parseInt(questionElement.dataset.question);
-        if (hasQuestionAnswer(questionElement)) {
-            markAnswered(questionNum);
-            console.log('Initially marked as answered:', questionNum);
-        } else {
-            console.log('Initially unanswered:', questionNum);
-        }
-    });
-    
-    // Update visual styles for existing answers
-    updateOptionStyles();
-    
-    // Fullscreen button click handler
-    document.getElementById('fullscreenBtn').addEventListener('click', function() {
-        fullscreenModal.hide();
-        enterFullscreen();
-    });
-    
-    // Show fullscreen prompt after everything is initialized
-    showFullscreenPrompt();
-    
-    // Initialize focus tracking
-    lastFocusTime = Date.now();
-    
-    // Navigation button event listeners
-    document.addEventListener('click', function(e) {
-        // Handle navigation buttons
-        if (e.target.classList.contains('nav-prev-btn')) {
-            previousQuestion();
-        } else if (e.target.classList.contains('nav-next-btn')) {
-            nextQuestion();
-        }
-        
-        // Handle reset answer buttons
-        if (e.target.classList.contains('btn-reset-answer')) {
-            const questionId = e.target.dataset.questionId;
-            if (questionId) {
-                showConfirm(
-                    'Are you sure you want to clear your answer for this question?',
-                    'Clear Answer'
-                ).then((confirmed) => {
-                    if (confirmed) {
-                        clearQuestionAnswer(questionId);
-                    }
-                });
-            }
-        }
-        
-        // Handle question navigator buttons
-        if (e.target.dataset.action === 'goToQuestion') {
-            const questionNum = parseInt(e.target.dataset.question);
-            goToQuestion(questionNum);
-        }
-        
-        // Handle option clicks
-        const optionItem = e.target.closest('.option-item');
-        if (optionItem) {
-            const input = optionItem.querySelector('input[type="radio"], input[type="checkbox"]');
-            const label = optionItem.querySelector('label');
-            
-            if (input && e.target !== input && e.target !== label) {
-                if (input.type === 'radio') {
-                    input.checked = true;
-                    input.dispatchEvent(new Event('change'));
-                } else if (input.type === 'checkbox') {
-                    input.checked = !input.checked;
-                    input.dispatchEvent(new Event('change'));
-                }
-            }
-        }
-    });
-    
-    // Form input change listeners
-    document.addEventListener('change', function(e) {
-        if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
-            const questionElement = e.target.closest('.question-container');
-            const questionNum = parseInt(e.target.dataset.questionNum);
-            
-            console.log('Question changed:', questionNum, 'Element:', questionElement);
-            
-            if (questionNum && questionElement) {
-                if (hasQuestionAnswer(questionElement)) {
-                    markAnswered(questionNum);
-                    console.log('Marked as answered:', questionNum);
-                } else {
-                    markUnanswered(questionNum);
-                    console.log('Marked as unanswered:', questionNum);
-                }
-                
-                // Auto-save the answer
-                debouncedSave(questionElement);
-            }
-            
-            // Update visual feedback
-            if (e.target.type === 'radio') {
-                const name = e.target.name;
-                document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-                    radio.closest('.option-item').classList.remove('selected');
-                });
-            }
-            updateOptionStyles();
-        }
-    });
-    
-    // Textarea input listeners
-    document.addEventListener('input', function(e) {
-        if (e.target.matches('textarea[data-question-num]')) {
-            const questionElement = e.target.closest('.question-container');
-            const questionNum = parseInt(e.target.dataset.questionNum);
-            
-            console.log('Textarea changed:', questionNum, 'Element:', questionElement);
-            
-            if (questionNum && questionElement) {
-                if (hasQuestionAnswer(questionElement)) {
-                    markAnswered(questionNum);
-                    console.log('Marked as answered:', questionNum);
-                } else {
-                    markUnanswered(questionNum);
-                    console.log('Marked as unanswered:', questionNum);
-                }
-                
-                // Auto-save the answer
-                debouncedSave(questionElement);
-            }
-        }
-    });
-    
-    // Show fullscreen prompt
-    showFullscreenPrompt();
-});
-
-// Update option visual styles
-function updateOptionStyles() {
-    document.querySelectorAll('.option-item').forEach(item => {
-        const input = item.querySelector('input[type="radio"], input[type="checkbox"]');
-        if (input && input.checked) {
-            item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
-        }
-    });
-}
-
-// Fullscreen functions
-function showFullscreenPrompt() {
-    if (fullscreenModal) {
-        fullscreenModal.show();
-    }
-}
-
-// Focus warning modal function
-function showFocusWarning(message) {
-    return new Promise((resolve) => {
-        if (focusWarningModal) {
-            // Set the message in the modal body
-            document.getElementById('focusWarningModalBody').innerHTML = message;
-            
-            // Set up the button click handler
-            const button = document.getElementById('focusWarningBtn');
-            const handleClick = () => {
-                button.removeEventListener('click', handleClick);
-                focusWarningModal.hide();
-                resolve();
-            };
-            
-            button.addEventListener('click', handleClick);
-            focusWarningModal.show();
-        } else {
-            resolve();
-        }
-    });
-}
-
-// Fullscreen functionality
-function enterFullscreen() {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(err => {
-            console.log('Fullscreen request failed:', err);
-        });
-    } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
-    }
-}
-
-// Monitor fullscreen changes
-document.addEventListener('fullscreenchange', function() {
-    if (!document.fullscreenElement) {
-        showAlert(
-            'You have exited fullscreen mode. Please click OK to return to fullscreen and continue the quiz.',
-            'warning',
-            'Fullscreen Required'
-        ).then(() => {
-            enterFullscreen();
-        });
-    }
-});
-
-document.addEventListener('webkitfullscreenchange', function() {
-    if (!document.webkitFullscreenElement) {
-        showAlert(
-            'You have exited fullscreen mode. Please click OK to return to fullscreen and continue the quiz.',
-            'warning',
-            'Fullscreen Required'
-        ).then(() => {
-            enterFullscreen();
-        });
-    }
-});
-
-// Focus/Blur tracking
-let focusWarningCount = 0;
-const MAX_WARNINGS = 3;
-let isProcessingWarning = false;
-let lastFocusTime = Date.now();
-
-async function handleFocusLoss(reason) {
-    if (isProcessingWarning) {
-        return;
-    }
-    
-    // Only warn if user was away for more than 1 second
-    const timeSinceFocus = Date.now() - lastFocusTime;
-    if (timeSinceFocus < 1000) {
-        return;
-    }
-    
-    isProcessingWarning = true;
-    focusWarningCount++;
-    
-    if (focusWarningCount >= MAX_WARNINGS) {
-        await showFocusWarning(
-            `<strong>Final Warning #${focusWarningCount}</strong><br><br>` +
-            'You have reached the maximum number of warnings. Your quiz will be automatically submitted now to prevent cheating.'
-        );
-        
-        // Auto-submit the quiz
-        const quizForm = document.getElementById('quizForm');
-        if (quizForm) {
-            // Add a hidden field to indicate auto-submission due to violations
-            const autoSubmitField = document.createElement('input');
-            autoSubmitField.type = 'hidden';
-            autoSubmitField.name = 'auto_submit_reason';
-            autoSubmitField.value = 'focus_violations';
-            quizForm.appendChild(autoSubmitField);
-            
-            // Submit the form
-            quizForm.submit();
-        } else {
-            // Fallback: reload the page if form not found
-            window.location.reload();
-        }
-    } else {
-        const remainingWarnings = MAX_WARNINGS - focusWarningCount;
-        await showFocusWarning(
-            `<strong>Warning #${focusWarningCount} of ${MAX_WARNINGS}</strong><br><br>` +
-            `${reason}<br><br>` +
-            `You have <strong>${remainingWarnings}</strong> warning${remainingWarnings > 1 ? 's' : ''} remaining before your quiz is automatically submitted.`
-        );
-    }
-    
-    isProcessingWarning = false;
-}
-
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        lastFocusTime = Date.now();
-        // Don't immediately show warning, wait for user to return
-        setTimeout(() => {
-            if (document.hidden) {
-                handleFocusLoss('You switched to another tab or minimized the browser. Please stay focused on the quiz.');
-            }
-        }, 1000); // Wait 1 second before showing warning
-    } else {
-        // User returned, update last focus time
-        lastFocusTime = Date.now();
-    }
-});
-
-// Window blur/focus tracking
-window.addEventListener('blur', function() {
-    lastFocusTime = Date.now();
-    // Don't immediately show warning, wait to see if it's just a brief focus loss
-    setTimeout(() => {
-        if (document.hasFocus && !document.hasFocus()) {
-            handleFocusLoss('You clicked outside the quiz window or switched applications. Please stay focused on the quiz.');
-        }
-    }, 1000); // Wait 1 second before showing warning
-});
-
-window.addEventListener('focus', function() {
-    // User returned focus, update time and reset processing flag
-    lastFocusTime = Date.now();
-    isProcessingWarning = false;
-});
-
-// Prevent leaving the page
-window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-    e.returnValue = 'Are you sure you want to leave? Your quiz progress may be lost.';
-    return 'Are you sure you want to leave? Your quiz progress may be lost.';
-});
-
-// Prevent context menu and certain shortcuts
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    showAlert(
-        'Right-click is disabled during the quiz. The page will refresh.',
-        'warning',
-        'Action Not Allowed'
-    ).then(() => {
-        window.location.reload();
-    });
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
-        (e.ctrlKey && e.shiftKey && e.keyCode === 74) || 
-        (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault();
-        showAlert(
-            'This action is not allowed during the quiz. The page will refresh.',
-            'warning',
-            'Action Not Allowed'
-        ).then(() => {
-            window.location.reload();
-        });
-    }
-});
+      }).catch(()=>{});
+    },10000);
+  }  
+  
+  // Anti-cheating functions
+  function enterFullscreen(){const elem=document.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{});}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen();}else if(elem.msRequestFullscreen){elem.msRequestFullscreen();}}
+  function showFocusWarning(msg){return new Promise((resolve)=>{if(focusWarningModal){document.getElementById('focusWarningModalBody').innerHTML=msg;const btn=document.getElementById('focusWarningBtn');const handleClick=()=>{btn.removeEventListener('click',handleClick);focusWarningModal.hide();resolve();};btn.addEventListener('click',handleClick);focusWarningModal.show();}else{resolve();}});}
+  async function handleFocusLoss(reason){if(isProcessingWarning)return;const timeSinceFocus=Date.now()-lastFocusTime;if(timeSinceFocus<1000)return;isProcessingWarning=true;focusWarningCount++;if(focusWarningCount>=MAX_WARNINGS){await showFocusWarning('<strong>Final Warning #'+focusWarningCount+'</strong><br><br>You have reached the maximum number of warnings. Your quiz will be automatically submitted now.');saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{if(r.redirect_url)window.location=r.redirect_url;}));}else{const remaining=MAX_WARNINGS-focusWarningCount;await showFocusWarning('<strong>Warning #'+focusWarningCount+' of '+MAX_WARNINGS+'</strong><br><br>'+reason+'<br><br>You have <strong>'+remaining+'</strong> warning'+(remaining>1?'s':'')+' remaining.');}isProcessingWarning=false;}
+  
+  // Event listeners
+  nextBtn.addEventListener('click',()=>{if(currentIndex<questionOrder.length-1){saveCurrent().then(()=>loadQuestion(currentIndex+1));}});
+  prevBtn.addEventListener('click',()=>{if(currentIndex>0){saveCurrent().then(()=>loadQuestion(currentIndex-1));}});
+  clearBtn.addEventListener('click',()=>{const q=questionOrder[currentIndex];if(!q)return;answers[q.id]={options:[],text:''};renderQuestion(q);saveCurrent().then(updateNav);});
+  finalizeBtn.addEventListener('click',()=>{if(confirm('Are you sure you want to submit your quiz? You cannot change answers after submission.')){saveCurrent().then(()=>fetchJSON(endpoints.finalize,{method:'POST',headers:{'X-CSRFToken':csrf()}}).then(r=>{if(r.redirect_url)window.location=r.redirect_url;}));}});
+  document.addEventListener('change',e=>{if(e.target.classList.contains('answer-opt'))updateNav();});
+  
+  // Anti-cheating monitoring
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){lastFocusTime=Date.now();setTimeout(()=>{if(document.hidden){handleFocusLoss('You switched to another tab or minimized the browser.');}},1000);}else{lastFocusTime=Date.now();}});
+  window.addEventListener('blur',()=>{lastFocusTime=Date.now();setTimeout(()=>{if(document.hasFocus&&!document.hasFocus()){handleFocusLoss('You clicked outside the quiz window.');}},1000);});
+  window.addEventListener('focus',()=>{lastFocusTime=Date.now();isProcessingWarning=false;});
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){handleFocusLoss('You exited fullscreen mode.').then(()=>enterFullscreen());}});
+  document.addEventListener('webkitfullscreenchange',()=>{if(!document.webkitFullscreenElement){handleFocusLoss('You exited fullscreen mode.').then(()=>enterFullscreen());}});
+  document.addEventListener('contextmenu',e=>{e.preventDefault();alert('Right-click is disabled during the quiz.');});
+  document.addEventListener('keydown',e=>{if(e.keyCode===123||(e.ctrlKey&&e.shiftKey&&(e.keyCode===73||e.keyCode===74))||(e.ctrlKey&&e.keyCode===85)){e.preventDefault();alert('This action is not allowed during the quiz.');}});
+  window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='Are you sure you want to leave?';return 'Are you sure you want to leave?';});
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded',()=>{fullscreenModal=new bootstrap.Modal(document.getElementById('fullscreenModal'));focusWarningModal=new bootstrap.Modal(document.getElementById('focusWarningModal'));document.getElementById('fullscreenBtn').addEventListener('click',()=>{fullscreenModal.hide();enterFullscreen();});fullscreenModal.show();});
+  init();
+})();
 </script>
 {% endblock %}
