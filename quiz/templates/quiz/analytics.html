@@ -98,7 +98,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
+                <div class="card-header bg-dark">
                     <h3 class="mb-0">
                         <i class="fas fa-clock me-2"></i>Time Analysis
                     </h3>
@@ -106,7 +106,7 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-borderless">
-                            <thead class="table-light">
+                            <thead class="table-dark">
                                 <tr>
                                     <th scope="col">Average Time</th>
                                     <th scope="col">Quiz Duration</th>
@@ -132,7 +132,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
+                <div class="card-header bg-dark">
                     <h3 class="mb-0">
                         <i class="fas fa-star me-2"></i>Top {{ top_10_percent_count }} Performers
                     </h3>
@@ -159,7 +159,7 @@
                                         {% elif forloop.counter == 3 %}
                                             <span class="badge bg-warning text-dark">🥉 {{ forloop.counter }}</span>
                                         {% else %}
-                                            <span class="badge bg-light text-dark">{{ forloop.counter }}</span>
+                                            <span class="badge bg-secondary">{{ forloop.counter }}</span>
                                         {% endif %}
                                     </td>
                                     <td class="fw-bold">{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
@@ -186,7 +186,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
+                <div class="card-header bg-dark">
                     <h3 class="mb-0">
                         <i class="fas fa-chart-line me-2"></i>Student Performance
                     </h3>
@@ -209,7 +209,7 @@
                             <tbody>
                                 {% for perf in student_performance %}
                                 <tr>
-                                    <td><span class="badge bg-light text-dark">{{ forloop.counter }}</span></td>
+                                    <td><span class="badge bg-secondary">{{ forloop.counter }}</span></td>
                                     <td class="fw-bold">{{ perf.student.get_full_name|default:perf.student.username }}</td>
                                     <td><span class="badge bg-info">{{ perf.total_attempts }}</span></td>
                                     <td class="text-success fw-bold">{{ perf.best_score|floatformat:1 }}%</td>
@@ -253,7 +253,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
+                <div class="card-header bg-dark">
                     <h3 class="mb-0">
                         <i class="fas fa-history me-2"></i>Recent Attempts
                     </h3>

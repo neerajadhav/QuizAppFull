@@ -67,7 +67,7 @@
                         {% endif %}
                     </div>
                     
-                    <div class="alert alert-light border-start border-primary border-3 mb-3">
+                    <div class="alert alert-dark border-start border-primary border-3 mb-3">
                         {{ answer_data.question.question_text|safe }}
                     </div>
                     
@@ -90,7 +90,7 @@
                     {% else %}
                         <div class="mb-3">
                             <strong>Your Answer:</strong>
-                            <div class="bg-light p-3 border rounded mt-2">
+                            <div class="alert alert-dark p-3 border rounded mt-2">
                                 {{ answer_data.text_answer|default:"No answer provided" }}
                             </div>
                         </div>

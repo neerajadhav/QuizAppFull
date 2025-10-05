@@ -26,7 +26,7 @@
                 {% if user.is_authenticated %}
                     <span class="navbar-text me-2">{{ user.username }}</span>
                     {% if user.is_staff %}
-                        <a href="/admin/" class="btn btn-danger btn-sm">Admin</a>
+                        <a href="/admin/" class="btn btn-primary btn-sm">Admin</a>
                     {% endif %}
                     <a href="{% url 'student_logout' %}" class="btn btn-outline-secondary btn-sm">Logout</a>
                 {% else %}
