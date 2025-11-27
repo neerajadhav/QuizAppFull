@@ -993,3 +993,67 @@ hr {
 ::-webkit-scrollbar-thumb:hover {
     background: #4a4a4a;
 }
+
+/* Option Card Dark Mode Support */
+.option-card {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+}
+
+.option-card:hover {
+    background-color: #333333 !important;
+    border-color: #5dade2 !important;
+}
+
+.option-card.selected {
+    background-color: rgba(52, 152, 219, 0.15) !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.25) !important;
+}
+
+.option-card label {
+    color: #e0e0e0 !important;
+}
+
+.option-card.selected label {
+    color: #3498db !important;
+}
+
+.option-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+/* Option Card Dark Mode Support - Simplified */
+.option-card {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+.option-card:hover {
+    background-color: #333333 !important;
+    border-color: #6c757d !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.option-card.selected {
+    background-color: rgba(52, 152, 219, 0.15) !important;
+    border-color: #3498db !important;
+    box-shadow: none !important; /* Remove glow */
+}
+
+.option-card label {
+    color: #e0e0e0 !important;
+}
+
+.option-card.selected label {
+    color: #3498db !important;
+}
+
+.option-card:focus-within {
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25) !important;
+}

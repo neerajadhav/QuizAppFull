@@ -213,11 +213,11 @@
                     const checked = selected.includes(opt.id) ? 'checked' : '';
                     const inputName = 'q_' + question.id + (inputType === 'checkbox' ? '[]' : '');
 
-                    html += '<div class="form-check mb-2 p-2 border rounded">';
-                    html += '<input class="form-check-input answer-opt me-2" data-q="' + question.id + '" ';
+                    html += '<div class="option-card d-flex align-items-center mb-3 p-3 rounded">';
+                    html += '<input class="form-check-input answer-opt me-3 mt-0" data-q="' + question.id + '" ';
                     html += 'type="' + inputType + '" value="' + opt.id + '" id="opt' + opt.id + '" ';
                     html += checked + ' name="' + inputName + '">';
-                    html += '<label class="form-check-label w-100" for="opt' + opt.id + '">' + opt.text + '</label>';
+                    html += '<label class="form-check-label flex-grow-1 stretched-link" for="opt' + opt.id + '">' + opt.text + '</label>';
                     html += '</div>';
                 });
             } else if (question.type === 'short_answer') {
@@ -228,6 +228,19 @@
 
             html += '</div></div>';
             DOM.panel.innerHTML = html;
+            UI.updateOptionStyles();
+        },
+
+        updateOptionStyles: function () {
+            const cards = document.querySelectorAll('.option-card');
+            cards.forEach(function (card) {
+                const input = card.querySelector('input');
+                if (input && input.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
         },
 
         showInfo: function (message) {
@@ -689,6 +702,7 @@
             document.addEventListener('change', function (e) {
                 if (e.target && e.target.classList && e.target.classList.contains('answer-opt')) {
                     UI.updateNav();
+                    UI.updateOptionStyles();
                 }
             });
         },
