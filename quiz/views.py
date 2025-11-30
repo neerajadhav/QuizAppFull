@@ -13,6 +13,7 @@ import csv
 from django.views.decorators.http import require_POST, require_GET
 from django.forms.models import model_to_dict
 from django.db import transaction
+from wagtail.rich_text import expand_db_html
 
 
 def student_register(request):
@@ -285,7 +286,7 @@ def _serialize_question(question, include_options=True, shuffle_seed=None):
         'type': question.question_type,
         'marks': question.marks,
         'is_required': question.is_required,
-        'html': question.question_text,  # rich text safe HTML
+        'html': expand_db_html(question.question_text),  # rich text safe HTML
     }
     if include_options and question.question_type in ['single','multiple','true_false']:
         opts = list(question.options.all())
